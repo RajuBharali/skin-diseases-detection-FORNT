@@ -4,7 +4,11 @@ import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { predictImage } from "@/app/lib/api"
 
-export default function UploadBox() {
+interface UploadBoxProps {
+  onSwitchToCamera?: () => void
+}
+
+export default function UploadBox({ onSwitchToCamera }: UploadBoxProps) {
 
   const router = useRouter()
   const inputRef = useRef<HTMLInputElement>(null)
@@ -276,6 +280,19 @@ export default function UploadBox() {
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-xl">
               {error}
+            </div>
+          )}
+
+          {/* camera switch link */}
+          {onSwitchToCamera && (
+            <div className="mt-4 text-center">
+              <button
+                type="button"
+                onClick={onSwitchToCamera}
+                className="text-blue-600 hover:underline text-sm"
+              >
+                Use live camera instead
+              </button>
             </div>
           )}
 
