@@ -18,41 +18,31 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
   const streamRef = useRef<MediaStream | null>(null)
 
   const [loading, setLoading] = useState(false)
+  const [cameraReady, setCameraReady] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [permissionDenied, setPermissionDenied] = useState(false)
-  const [cameraReady, setCameraReady] = useState(false)
 
   useEffect(() => {
     requestCameraAccess()
 
-    return () => {
-      stopCamera()
-    }
+    return () => stopCamera()
   }, [])
 
   function stopCamera() {
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop())
+      streamRef.current.getTracks().forEach(track => track.stop())
       streamRef.current = null
     }
   }
 
   async function requestCameraAccess() {
-    setError(null)
-    setPermissionDenied(false)
-
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      setError("Camera API not supported in this browser.")
-      return
-    }
-
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode: "environment", // use rear camera on mobile
+          facingMode: "environment",
           width: { ideal: 1280 },
-          height: { ideal: 720 },
-        },
+          height: { ideal: 720 }
+        }
       })
 
       streamRef.current = stream
@@ -60,29 +50,23 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
       if (videoRef.current) {
         videoRef.current.srcObject = stream
       }
+
     } catch (err: any) {
-      console.error(err)
 
       if (
         err?.name === "NotAllowedError" ||
         err?.name === "PermissionDeniedError"
       ) {
         setPermissionDenied(true)
-        setError("Camera access was denied. Please allow camera permission.")
-      } else if (
-        err?.name === "NotFoundError" ||
-        err?.name === "DevicesNotFoundError"
-      ) {
-        setError("No camera device found.")
+        setError("Camera permission denied.")
       } else {
-        setError("Unable to access camera.")
+        setError("Camera access failed.")
       }
     }
   }
 
   async function capture() {
     if (!videoRef.current || !canvasRef.current) return
-    if (!cameraReady) return
 
     const video = videoRef.current
     const canvas = canvasRef.current
@@ -93,9 +77,10 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
     canvas.width = video.videoWidth
     canvas.height = video.videoHeight
 
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+    ctx.drawImage(video, 0, 0)
 
-    canvas.toBlob(async (blob) => {
+    canvas.toBlob(async blob => {
+
       if (!blob) return
 
       setLoading(true)
@@ -105,75 +90,76 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
 
         const result = await predictImage(file)
 
-        try {
-          sessionStorage.setItem("lastPrediction", JSON.stringify(result))
-          sessionStorage.removeItem("lastPreview")
-        } catch {}
+        sessionStorage.setItem("lastPrediction", JSON.stringify(result))
 
         onResult(result)
 
         router.push("/result")
-      } catch (err) {
-        console.error(err)
-        setError("Prediction failed. Please try again.")
-      } finally {
-        setLoading(false)
+
+      } catch (e) {
+        console.error(e)
       }
+
+      setLoading(false)
+
     }, "image/jpeg")
   }
 
   return (
-    <div className="flex flex-col items-center gap-4 w-full">
+    <div className="flex flex-col items-center gap-5 w-full">
 
       {error && (
-        <p className="text-red-500 text-sm text-center">{error}</p>
+        <p className="text-red-500 text-sm">{error}</p>
       )}
 
-      {permissionDenied && (
-        <div className="w-full max-w-md bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+      {/* Camera Container */}
 
-          <p className="text-sm text-yellow-800 mb-3">
-            Camera permission is required to capture an image.
-          </p>
+      <div className="relative w-full max-w-md rounded-xl overflow-hidden">
 
-          <div className="flex justify-center gap-3">
-            <button
-              onClick={requestCameraAccess}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            >
-              Retry
-            </button>
+        {/* VIDEO */}
 
-            <button
-              onClick={() => onFallback?.()}
-              className="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300"
-            >
-              Upload Instead
-            </button>
+        <video
+          ref={videoRef}
+          autoPlay
+          muted
+          playsInline
+          onLoadedMetadata={() => setCameraReady(true)}
+          className="w-full h-auto bg-black"
+        />
+
+        {/* SCANNER OVERLAY */}
+
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+
+          {/* Focus Box */}
+
+          <div className="relative w-56 h-56 border-2 border-green-400 rounded-lg shadow-lg">
+
+            {/* Corners */}
+
+            <div className="absolute -top-1 -left-1 w-6 h-6 border-l-4 border-t-4 border-green-400"></div>
+            <div className="absolute -top-1 -right-1 w-6 h-6 border-r-4 border-t-4 border-green-400"></div>
+            <div className="absolute -bottom-1 -left-1 w-6 h-6 border-l-4 border-b-4 border-green-400"></div>
+            <div className="absolute -bottom-1 -right-1 w-6 h-6 border-r-4 border-b-4 border-green-400"></div>
+
+            {/* Scan Line */}
+
+            <div className="absolute left-0 right-0 h-[2px] bg-green-400 animate-scan"></div>
+
           </div>
 
-          <p className="text-xs text-gray-600 mt-3">
-            If permission was denied previously, enable camera access in
-            browser site settings.
-          </p>
         </div>
-      )}
 
-      <video
-        ref={videoRef}
-        autoPlay
-        muted
-        playsInline
-        onLoadedMetadata={() => setCameraReady(true)}
-        className="w-full max-w-md rounded-lg bg-black"
-      />
+      </div>
 
       <canvas ref={canvasRef} className="hidden" />
 
+      {/* CAPTURE BUTTON */}
+
       <button
         onClick={capture}
-        disabled={loading || !cameraReady}
-        className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+        disabled={!cameraReady || loading}
+        className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
       >
         {loading ? "Analyzing..." : "Capture & Analyze"}
       </button>
