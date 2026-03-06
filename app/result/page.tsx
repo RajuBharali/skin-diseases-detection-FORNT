@@ -1,7 +1,8 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface FinalDecision {
@@ -10,10 +11,6 @@ interface FinalDecision {
 }
 interface PredictionData {
   final_decision: FinalDecision
-}
-
-const MOCK: PredictionData = {
-  final_decision: { result: "ECZEMA", confidence_percent: 74.08 },
 }
 
 // ─── Animated Counter ─────────────────────────────────────────────────────────
@@ -122,6 +119,7 @@ function SeverityBadge({ pct }: { pct: number }) {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function ResultPage() {
+  const router = useRouter()
   const [data, setData] = useState<PredictionData | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [ready, setReady] = useState(false)
@@ -130,11 +128,28 @@ export default function ResultPage() {
     try {
       const raw = sessionStorage.getItem("lastPrediction")
       const prev = sessionStorage.getItem("lastPreview")
-      setData(raw ? JSON.parse(raw) : MOCK)
-      if (prev) setPreview(prev)
-    } catch { setData(MOCK) }
+
+      if (raw) {
+        const parsed: PredictionData = JSON.parse(raw)
+        // ensure we actually have a result; otherwise redirect back
+        if (parsed.final_decision && parsed.final_decision.result) {
+          setData(parsed)
+          if (prev) setPreview(prev)
+        } else {
+          router.push("/predict")
+          return
+        }
+      } else {
+        router.push("/predict")
+        return
+      }
+    } catch {
+      router.push("/predict")
+      return
+    }
+
     setTimeout(() => setReady(true), 60)
-  }, [])
+  }, [router])
 
   if (!data) return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#fff" }}>

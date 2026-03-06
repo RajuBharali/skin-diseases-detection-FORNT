@@ -2,7 +2,7 @@ export async function predictImage(file: File) {
   const formData = new FormData()
   formData.append("file", file)
 
-  const res = await fetch("https://skin-diseases-detection-backend.onrender.com/predict", {
+  const res = await fetch("https://simpletech.in/predict", {
     method: "POST",
     body: formData
   })
