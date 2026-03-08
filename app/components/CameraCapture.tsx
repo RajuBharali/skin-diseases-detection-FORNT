@@ -24,9 +24,9 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [autoCaptured, setAutoCaptured] = useState(false)
 
-  /* -------------------------
+  /* =============================
      Start Camera
-  --------------------------*/
+  ==============================*/
 
   useEffect(() => {
 
@@ -36,13 +36,13 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
 
   }, [])
 
-  /* -------------------------
+  /* =============================
      Scanner Loop
-  --------------------------*/
+  ==============================*/
 
   useEffect(() => {
 
-    if (!cameraReady) return
+    if (!cameraReady || autoCaptured) return
 
     const interval = setInterval(() => {
       scanFrame()
@@ -52,22 +52,22 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
 
   }, [cameraReady, autoCaptured])
 
-  /* -------------------------
+
+  /* =============================
      Camera Controls
-  --------------------------*/
+  ==============================*/
 
   function stopCamera() {
 
     if (streamRef.current) {
 
-      streamRef.current
-        .getTracks()
-        .forEach(track => track.stop())
-
+      streamRef.current.getTracks().forEach(track => track.stop())
       streamRef.current = null
+
     }
 
   }
+
 
   async function startCamera() {
 
@@ -89,22 +89,22 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
         videoRef.current.srcObject = stream
       }
 
-    } catch (err) {
+    } catch {
 
-      setError("Camera access failed")
+      setError("Unable to access camera.")
 
     }
 
   }
 
-  /* -------------------------
-     Scan Frame
-  --------------------------*/
+  /* =============================
+     Scan Frame (Auto Detection)
+  ==============================*/
 
   async function scanFrame() {
 
     if (!videoRef.current || !canvasRef.current) return
-    if (autoCaptured) return
+    if (loading || autoCaptured) return
 
     const video = videoRef.current
     const canvas = canvasRef.current
@@ -129,14 +129,14 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
           type: "image/jpeg"
         })
 
-        const result = await predictImage(file)
+        const result: PredictionResponse = await predictImage(file)
 
         setPrediction(result)
 
         const confidence =
           result?.final_decision?.confidence_percent || 0
 
-        /* -------- AUTO DETECTION -------- */
+        /* AUTO DETECT RESULT */
 
         if (confidence > 85 && !autoCaptured) {
 
@@ -144,9 +144,16 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
 
           stopCamera()
 
+          const preview = canvas.toDataURL("image/jpeg")
+
           sessionStorage.setItem(
             "lastPrediction",
             JSON.stringify(result)
+          )
+
+          sessionStorage.setItem(
+            "lastPreview",
+            preview
           )
 
           onResult(result)
@@ -157,7 +164,7 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
 
       } catch (err) {
 
-        console.error("Prediction failed", err)
+        console.error("Prediction failed:", err)
 
       }
 
@@ -165,9 +172,10 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
 
   }
 
-  /* -------------------------
+
+  /* =============================
      Manual Capture
-  --------------------------*/
+  ==============================*/
 
   async function capture() {
 
@@ -184,6 +192,8 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
 
     ctx.drawImage(video, 0, 0, 224, 224)
 
+    const preview = canvas.toDataURL("image/jpeg")
+
     canvas.toBlob(async blob => {
 
       if (!blob) return
@@ -196,11 +206,16 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
           type: "image/jpeg"
         })
 
-        const result = await predictImage(file)
+        const result: PredictionResponse = await predictImage(file)
 
         sessionStorage.setItem(
           "lastPrediction",
           JSON.stringify(result)
+        )
+
+        sessionStorage.setItem(
+          "lastPreview",
+          preview
         )
 
         onResult(result)
@@ -209,9 +224,9 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
 
         router.push("/result")
 
-      } catch (err) {
+      } catch {
 
-        console.error(err)
+        setError("Prediction failed.")
 
       }
 
@@ -221,9 +236,10 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
 
   }
 
-  /* -------------------------
+
+  /* =============================
      UI
-  --------------------------*/
+  ==============================*/
 
   return (
 
@@ -233,7 +249,7 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
         <p className="text-red-500 text-sm">{error}</p>
       )}
 
-      {/* Camera Container */}
+      {/* Camera */}
 
       <div className="relative w-full max-w-sm rounded-2xl overflow-hidden shadow-xl border border-gray-200">
 
@@ -259,7 +275,7 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
             <div className="absolute -bottom-1 -left-1 w-5 h-5 border-l-4 border-b-4 border-green-400"></div>
             <div className="absolute -bottom-1 -right-1 w-5 h-5 border-r-4 border-b-4 border-green-400"></div>
 
-            {/* Scan Line */}
+            {/* Scan line */}
 
             <div className="absolute left-0 right-0 animate-scan"></div>
 
@@ -267,26 +283,29 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
 
         </div>
 
+
         {/* Live Prediction */}
 
         {prediction?.final_decision && (
 
-          <div className="absolute bottom-3 left-3 right-3 bg-black/75 backdrop-blur-md text-white rounded-lg px-3 py-2 shadow">
+          <div className="absolute bottom-3 left-3 right-3 bg-black/70 backdrop-blur text-white rounded-lg px-3 py-2 shadow">
 
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between text-sm font-semibold">
 
-              <span className="font-semibold text-sm">
+              <span>
                 {prediction.final_decision.result}
               </span>
 
-              <span className="text-green-300 text-xs">
+              <span className="text-green-300">
                 {prediction.final_decision.confidence_percent.toFixed(1)}%
               </span>
 
             </div>
 
-            <div className="text-[11px] opacity-80 mt-1">
+            <div className="text-xs opacity-80 mt-1">
+
               {prediction.final_decision.medical_advice}
+
             </div>
 
           </div>
@@ -295,7 +314,9 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
 
       </div>
 
+
       <canvas ref={canvasRef} className="hidden" />
+
 
       {/* Buttons */}
 

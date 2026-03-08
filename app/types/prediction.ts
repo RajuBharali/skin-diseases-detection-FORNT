@@ -10,44 +10,44 @@ export interface PredictionResponse {
   }
 
   /* -----------------------------
-     Stage 2 : Disease Group
+     Stage 2 : Cancer / Lesion Model
      Example:
-     acne, eczema, psoriasis
+     mel, bcc, nv
   ------------------------------*/
-  stage2?: {
-    [disease: string]: number
-  }
+  stage2?: Record<string, number>
 
   /* -----------------------------
-     Stage 3 : Advanced Classification
+     Stage 3 : General Skin Disease
      Example:
-     melanoma, bcc, akiec
+     Acne, Psoriasis, Eczema
   ------------------------------*/
-  stage3?: {
-    [disease: string]: number
-  }
+  stage3?: Record<string, number>
 
   /* -----------------------------
      Final AI Decision
   ------------------------------*/
   final_decision: {
 
-    /* Which stage produced result */
+    /* Which stage produced the result */
     stage: 1 | 2 | 3
 
     /* Final predicted disease */
     result: string
 
-    /* Confidence percentage */
+    /* Confidence percentage (0-100) */
     confidence_percent: number
 
     /* Disease category */
-    type?: "healthy" | "disease" | "cancer"
+    type?:
+      | "Healthy"
+      | "Cancer"
+      | "Benign Lesion"
+      | "General Skin Condition"
 
     /* Medical recommendation */
     medical_advice: string
 
-    /* Cancer severity (if applicable) */
+    /* Cancer severity if applicable */
     cancer_level?: "low" | "moderate" | "high"
 
   }
