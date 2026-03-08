@@ -22,84 +22,102 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
   const lastResultsRef = useRef<string[]>([])
   const predictingRef = useRef(false)
 
-  const [cameraReady,setCameraReady] = useState(false)
-  const [prediction,setPrediction] = useState<PredictionResponse | null>(null)
-  const [error,setError] = useState<string | null>(null)
-  const [autoCaptured,setAutoCaptured] = useState(false)
+  const [cameraReady, setCameraReady] = useState(false)
+  const [prediction, setPrediction] = useState<PredictionResponse | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [autoCaptured, setAutoCaptured] = useState(false)
 
-  const [movementScore,setMovementScore] = useState(0)
-  const [blurScore,setBlurScore] = useState(0)
-  const [skinRatio,setSkinRatio] = useState(0)
+  const [movementScore, setMovementScore] = useState(0)
+  const [blurScore, setBlurScore] = useState(0)
+  const [skinRatio, setSkinRatio] = useState(0)
 
   const SIZE = 224
 
-  /* CAMERA START */
+  /* =========================
+      CAMERA START
+  ========================== */
 
-  useEffect(()=>{
+  useEffect(() => {
 
     startCamera()
 
-    return ()=>stopCamera()
-
-  },[])
-
-  useEffect(()=>{
-
-    if(!cameraReady || autoCaptured) return
-
-    const interval = setInterval(scanFrame,1500)
-
-    return ()=>clearInterval(interval)
-
-  },[cameraReady,autoCaptured])
-
-  function stopCamera(){
-
-    if(streamRef.current){
-
-      streamRef.current.getTracks().forEach(t=>t.stop())
-      streamRef.current=null
-
+    return () => {
+      stopCamera()
     }
 
-  }
+  }, [])
 
-  async function startCamera(){
+  useEffect(() => {
 
-    try{
+    if (!cameraReady || autoCaptured) return
+
+    const interval = setInterval(scanFrame, 1200)
+
+    return () => clearInterval(interval)
+
+  }, [cameraReady, autoCaptured])
+
+
+  async function startCamera() {
+
+    try {
 
       const stream = await navigator.mediaDevices.getUserMedia({
-        video:{ facingMode:"environment" }
+        video: {
+          facingMode: { ideal: "environment" },
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        }
       })
 
       streamRef.current = stream
 
-      if(videoRef.current){
+      if (videoRef.current) {
         videoRef.current.srcObject = stream
       }
 
-    }catch{
-      setError("Camera access denied")
+    } catch (err) {
+
+      console.error(err)
+      setError("Camera permission denied or unavailable.")
+
     }
 
   }
 
-  /* MOVEMENT DETECTION */
 
-  function detectMovement(frame:ImageData){
+  function stopCamera() {
 
-    if(!lastFrameRef.current){
+    if (!streamRef.current) return
+
+    streamRef.current.getTracks().forEach(track => track.stop())
+    streamRef.current = null
+
+  }
+
+
+  /* =========================
+      MOVEMENT DETECTION
+  ========================== */
+
+  function detectMovement(frame: ImageData) {
+
+    if (!lastFrameRef.current) {
+
       lastFrameRef.current = frame
       return 0
+
     }
 
-    let diff=0
+    let diff = 0
+    const prev = lastFrameRef.current.data
+    const curr = frame.data
 
-    for(let i=0;i<frame.data.length;i+=20){
-      diff+=Math.abs(frame.data[i]-lastFrameRef.current.data[i])
+    for (let i = 0; i < curr.length; i += 16) {
+      diff += Math.abs(curr[i] - prev[i])
     }
 
-    const score = diff/(frame.data.length/20)
+    const score = diff / (curr.length / 16)
 
     lastFrameRef.current = frame
     setMovementScore(score)
@@ -107,136 +125,152 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
     return score
   }
 
-  /* BLUR DETECTION */
 
-  function detectBlur(frame:ImageData){
+  /* =========================
+      BLUR DETECTION
+  ========================== */
+
+  function detectBlur(frame: ImageData) {
 
     const d = frame.data
-    let sum=0
+    let sum = 0
 
-    for(let i=0;i<d.length;i+=4){
-      const g=(d[i]+d[i+1]+d[i+2])/3
-      sum+=g*g
+    for (let i = 0; i < d.length; i += 4) {
+
+      const gray = (d[i] + d[i + 1] + d[i + 2]) / 3
+      sum += gray * gray
+
     }
 
-    const variance=sum/(d.length/4)
+    const variance = sum / (d.length / 4)
 
     setBlurScore(variance)
 
     return variance
   }
 
-  /* SKIN DETECTION */
 
-  function detectSkin(frame:ImageData){
+  /* =========================
+      SKIN DETECTION
+  ========================== */
 
-    const d=frame.data
-    let skin=0
-    let total=d.length/4
+  function detectSkin(frame: ImageData) {
 
-    for(let i=0;i<d.length;i+=4){
+    const d = frame.data
+    let skin = 0
+    const total = d.length / 4
 
-      const r=d[i]
-      const g=d[i+1]
-      const b=d[i+2]
+    for (let i = 0; i < d.length; i += 4) {
 
-      if(
-        r>95 && g>40 && b>20 &&
-        r>g && r>b &&
-        Math.abs(r-g)>15
-      ){
+      const r = d[i]
+      const g = d[i + 1]
+      const b = d[i + 2]
+
+      if (
+        r > 95 &&
+        g > 40 &&
+        b > 20 &&
+        r > g &&
+        r > b &&
+        Math.abs(r - g) > 15
+      ) {
         skin++
       }
 
     }
 
-    const ratio=skin/total
+    const ratio = skin / total
 
     setSkinRatio(ratio)
 
     return ratio
   }
 
-  /* MAIN SCAN */
 
-  async function scanFrame(){
+  /* =========================
+      MAIN FRAME SCAN
+  ========================== */
 
-    if(!videoRef.current || !canvasRef.current) return
-    if(predictingRef.current || autoCaptured) return
+  async function scanFrame() {
 
-    const canvas=canvasRef.current
-    const ctx=canvas.getContext("2d")
+    if (!videoRef.current || !canvasRef.current) return
+    if (predictingRef.current || autoCaptured) return
 
-    if(!ctx) return
+    const canvas = canvasRef.current
+    const ctx = canvas.getContext("2d")
 
-    canvas.width=SIZE
-    canvas.height=SIZE
+    if (!ctx) return
 
-    ctx.drawImage(videoRef.current,0,0,SIZE,SIZE)
+    canvas.width = SIZE
+    canvas.height = SIZE
 
-    const frame=ctx.getImageData(0,0,SIZE,SIZE)
+    ctx.drawImage(videoRef.current, 0, 0, SIZE, SIZE)
 
-    const move=detectMovement(frame)
-    const blur=detectBlur(frame)
-    const skin=detectSkin(frame)
+    const frame = ctx.getImageData(0, 0, SIZE, SIZE)
 
-    /* skip bad frames */
+    const movement = detectMovement(frame)
+    const blur = detectBlur(frame)
+    const skin = detectSkin(frame)
 
-    if(move>35) return
-    if(blur<400) return
-    if(skin<0.15) return
+    /* Skip bad frames */
 
-    predictingRef.current=true
+    if (movement > 35) return
+    if (blur < 400) return
+    if (skin < 0.15) return
 
-    canvas.toBlob(async blob=>{
+    predictingRef.current = true
 
-      if(!blob){
-        predictingRef.current=false
+    canvas.toBlob(async blob => {
+
+      if (!blob) {
+
+        predictingRef.current = false
         return
+
       }
 
-      try{
+      try {
 
-        const file=new File([blob],"scan.jpg",{type:"image/jpeg"})
+        const file = new File([blob], "scan.jpg", { type: "image/jpeg" })
 
-        const result:PredictionResponse = await predictImage(file)
+        const result: PredictionResponse = await predictImage(file)
 
         setPrediction(result)
 
-        const conf=result.final_decision.confidence_percent
-        const name=result.final_decision.result
+        const confidence = result.final_decision.confidence_percent
+        const label = result.final_decision.result
 
-        const history=[...lastResultsRef.current,name].slice(-3)
-        lastResultsRef.current=history
+        const history = [...lastResultsRef.current, label].slice(-3)
+        lastResultsRef.current = history
 
-        const stable = history.length===3 && history.every(r=>r===name)
+        const stable = history.length === 3 && history.every(r => r === label)
 
-        let second=0
+        let secondBest = 0
 
-        if(result.stage3){
+        if (result.stage3) {
 
-          const vals=Object.values(result.stage3)
-          const sorted=[...vals].sort((a,b)=>b-a)
-          second=sorted[1]*100
+          const vals = Object.values(result.stage3)
+          const sorted = [...vals].sort((a, b) => b - a)
+          secondBest = sorted[1] * 100
 
         }
 
-        const diff=conf-second
+        const diff = confidence - secondBest
 
-        if(
-          conf>=85 ||
-          (conf>=50 && diff>=10) ||
+        if (
+          confidence >= 85 ||
+          (confidence >= 50 && diff >= 10) ||
           stable
-        ){
+        ) {
 
           setAutoCaptured(true)
 
           stopCamera()
 
-          const preview=canvas.toDataURL("image/jpeg")
+          const preview = canvas.toDataURL("image/jpeg")
 
-          sessionStorage.setItem("lastPrediction",JSON.stringify(result))
-          sessionStorage.setItem("lastPreview",preview)
+          sessionStorage.setItem("lastPrediction", JSON.stringify(result))
+          sessionStorage.setItem("lastPreview", preview)
 
           onResult(result)
 
@@ -244,60 +278,67 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
 
         }
 
-      }catch(e){
-        console.error(e)
+      } catch (err) {
+
+        console.error("Prediction error:", err)
+
       }
 
-      predictingRef.current=false
+      predictingRef.current = false
 
-    },"image/jpeg",0.7)
+    }, "image/jpeg", 0.75)
 
   }
 
-  /* UI */
 
-  return(
+  /* =========================
+      UI
+  ========================== */
+
+  return (
 
     <div className="flex flex-col items-center gap-4">
 
-      {error && <div className="text-red-500">{error}</div>}
+      {error && (
+        <div className="text-red-500 text-sm">{error}</div>
+      )}
 
-      <div className="relative w-full max-w-sm rounded-xl overflow-hidden shadow">
+      <div className="relative w-full max-w-sm rounded-xl overflow-hidden shadow-lg">
 
         <video
           ref={videoRef}
           autoPlay
           muted
           playsInline
-          onLoadedMetadata={()=>setCameraReady(true)}
+          onLoadedMetadata={() => setCameraReady(true)}
           className="w-full h-[320px] object-cover bg-black"
         />
 
-        <canvas ref={canvasRef} className="hidden"/>
+        <canvas ref={canvasRef} className="hidden" />
 
-        {/* scanner */}
+        {/* Scanner Frame */}
 
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
 
           <div className="w-44 h-44 border-2 border-green-400 rounded-lg relative">
 
-            <div className="absolute left-0 right-0 h-[2px] bg-green-400 animate-scan"/>
+            <div className="absolute left-0 right-0 h-[2px] bg-green-400 animate-scan" />
 
           </div>
 
         </div>
 
-        {/* status */}
+        {/* Status */}
 
         <div className="absolute top-3 left-3 text-xs text-white bg-black/60 px-2 py-1 rounded">
 
-          {movementScore>35 && "Hold camera steady"}
-          {blurScore<400 && "Image blurry"}
-          {skinRatio<0.15 && "Place skin inside scanner"}
+          {movementScore > 35 && "Hold camera steady"}
+          {blurScore < 400 && "Image blurry"}
+          {skinRatio < 0.15 && "Place skin inside scanner"}
 
         </div>
 
-        {/* live result */}
+        {/* Live Prediction */}
 
         {prediction && (
 
@@ -314,12 +355,14 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
       </div>
 
       {onFallback && (
+
         <button
           onClick={onFallback}
-          className="bg-gray-200 px-4 py-2 rounded"
+          className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded transition"
         >
           Upload Image
         </button>
+
       )}
 
     </div>
