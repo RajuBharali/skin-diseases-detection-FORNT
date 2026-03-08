@@ -47,13 +47,14 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
   }
 
   async function startCamera() {
+
     try {
 
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: "environment",
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
+          width: { ideal: 640 },
+          height: { ideal: 480 }
         }
       })
 
@@ -167,9 +168,9 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
         <p className="text-red-500 text-sm">{error}</p>
       )}
 
-      {/* Camera */}
+      {/* Camera Container */}
 
-      <div className="relative w-full max-w-md rounded-xl overflow-hidden shadow-lg">
+      <div className="relative w-full max-w-sm rounded-2xl overflow-hidden shadow-xl border border-gray-200">
 
         <video
           ref={videoRef}
@@ -177,19 +178,23 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
           muted
           playsInline
           onLoadedMetadata={() => setCameraReady(true)}
-          className="w-full bg-black"
+          className="w-full h-[320px] object-cover bg-black"
         />
 
-        {/* Scanner overlay */}
+        {/* Scanner Overlay */}
 
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
 
-          <div className="relative w-56 h-56 border-2 border-green-400 rounded-lg">
+          <div className="relative w-44 h-44 border-2 border-green-400 rounded-xl">
 
-            <div className="absolute -top-1 -left-1 w-6 h-6 border-l-4 border-t-4 border-green-400"></div>
-            <div className="absolute -top-1 -right-1 w-6 h-6 border-r-4 border-t-4 border-green-400"></div>
-            <div className="absolute -bottom-1 -left-1 w-6 h-6 border-l-4 border-b-4 border-green-400"></div>
-            <div className="absolute -bottom-1 -right-1 w-6 h-6 border-r-4 border-b-4 border-green-400"></div>
+            {/* Corner markers */}
+
+            <div className="absolute -top-1 -left-1 w-5 h-5 border-l-4 border-t-4 border-green-400"></div>
+            <div className="absolute -top-1 -right-1 w-5 h-5 border-r-4 border-t-4 border-green-400"></div>
+            <div className="absolute -bottom-1 -left-1 w-5 h-5 border-l-4 border-b-4 border-green-400"></div>
+            <div className="absolute -bottom-1 -right-1 w-5 h-5 border-r-4 border-b-4 border-green-400"></div>
+
+            {/* Scan line */}
 
             <div className="absolute left-0 right-0 h-[2px] bg-green-400 animate-scan"></div>
 
@@ -197,21 +202,25 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
 
         </div>
 
-        {/* Live AI result */}
+        {/* Live AI Result */}
 
         {prediction?.final_decision && (
 
-          <div className="absolute bottom-3 left-3 bg-black/70 text-white text-sm px-3 py-2 rounded-lg">
+          <div className="absolute bottom-3 left-3 right-3 bg-black/75 backdrop-blur-md text-white rounded-lg px-3 py-2 shadow">
 
-            <div className="font-semibold">
-              {prediction.final_decision.result}
+            <div className="flex justify-between items-center">
+
+              <span className="font-semibold text-sm">
+                {prediction.final_decision.result}
+              </span>
+
+              <span className="text-xs text-green-300">
+                {prediction.final_decision.confidence_percent.toFixed(1)}%
+              </span>
+
             </div>
 
-            <div className="text-xs opacity-80">
-              {prediction.final_decision.confidence_percent.toFixed(1)}%
-            </div>
-
-            <div className="text-[11px] opacity-70 mt-1">
+            <div className="text-[11px] opacity-80 mt-1">
               {prediction.final_decision.medical_advice}
             </div>
 
@@ -223,12 +232,14 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
 
       <canvas ref={canvasRef} className="hidden" />
 
+      {/* Controls */}
+
       <div className="flex gap-3">
 
         <button
           onClick={capture}
           disabled={loading || !cameraReady}
-          className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+          className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 shadow"
         >
           {loading ? "Analyzing..." : "Capture & Analyze"}
         </button>
@@ -247,5 +258,4 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
     </div>
 
   )
-
 }
