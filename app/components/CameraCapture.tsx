@@ -18,178 +18,164 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
 
-  const [cameraReady, setCameraReady] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [prediction, setPrediction] = useState<PredictionResponse | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [cameraReady,setCameraReady] = useState(false)
+  const [loading,setLoading] = useState(false)
+  const [error,setError] = useState<string | null>(null)
+  const [scanning,setScanning] = useState(false)
 
-  useEffect(() => {
+  /* start camera */
+
+  useEffect(()=>{
     startCamera()
-    return () => stopCamera()
-  }, [])
+    return ()=>stopCamera()
+  },[])
 
-  useEffect(() => {
-    if (!cameraReady) return
+  /* auto capture after 6 sec */
 
-    const interval = setInterval(() => {
-      scanFrame()
-    }, 2000)
+  useEffect(()=>{
 
-    return () => clearInterval(interval)
+    if(!cameraReady) return
 
-  }, [cameraReady])
+    setScanning(true)
 
-  function stopCamera() {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop())
-      streamRef.current = null
+    const timer = setTimeout(()=>{
+
+      capture()
+
+    },6000)
+
+    return ()=>clearTimeout(timer)
+
+  },[cameraReady])
+
+  function stopCamera(){
+
+    if(streamRef.current){
+      streamRef.current.getTracks().forEach(t=>t.stop())
+      streamRef.current=null
     }
+
   }
 
-  async function startCamera() {
-    try {
+  async function startCamera(){
+
+    try{
 
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: "environment",
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
+
+        video:{
+          facingMode:"environment",
+          width:{ideal:720},
+          height:{ideal:480}
         }
+
       })
 
       streamRef.current = stream
 
-      if (videoRef.current) {
+      if(videoRef.current){
         videoRef.current.srcObject = stream
       }
 
-    } catch (err) {
+    }catch{
       setError("Camera access failed")
     }
+
   }
 
-  async function scanFrame() {
+  /* capture center focus region */
 
-    if (!videoRef.current || !canvasRef.current) return
+  async function capture(){
+
+    if(!videoRef.current || !canvasRef.current) return
 
     const video = videoRef.current
     const canvas = canvasRef.current
     const ctx = canvas.getContext("2d")
 
-    if (!ctx) return
+    if(!ctx) return
 
     const SIZE = 224
 
     canvas.width = SIZE
     canvas.height = SIZE
 
-    ctx.drawImage(video, 0, 0, SIZE, SIZE)
+    /* center crop */
 
-    canvas.toBlob(async blob => {
+    const vw = video.videoWidth
+    const vh = video.videoHeight
 
-      if (!blob) return
+    const cropSize = Math.min(vw,vh) * 0.45
 
-      try {
+    const sx = vw/2 - cropSize/2
+    const sy = vh/2 - cropSize/2
 
-        const file = new File([blob], "frame.jpg", {
-          type: "image/jpeg"
-        })
+    ctx.drawImage(
+      video,
+      sx,sy,cropSize,cropSize,
+      0,0,SIZE,SIZE
+    )
 
-        const result = await predictImage(file)
+    canvas.toBlob(async blob=>{
 
-        setPrediction(result)
-
-      } catch (err) {
-
-        console.error(err)
-
-      }
-
-    }, "image/jpeg", 0.7)
-
-  }
-
-  async function capture() {
-
-    if (!videoRef.current || !canvasRef.current) return
-
-    const video = videoRef.current
-    const canvas = canvasRef.current
-    const ctx = canvas.getContext("2d")
-
-    if (!ctx) return
-
-    canvas.width = 224
-    canvas.height = 224
-
-    ctx.drawImage(video, 0, 0, 224, 224)
-
-    canvas.toBlob(async blob => {
-
-      if (!blob) return
+      if(!blob) return
 
       setLoading(true)
 
-      try {
+      try{
 
-        const file = new File([blob], "capture.jpg", {
-          type: "image/jpeg"
-        })
+        const file = new File([blob],"capture.jpg",{type:"image/jpeg"})
 
-        const result = await predictImage(file)
+        const result:PredictionResponse = await predictImage(file)
 
-        sessionStorage.setItem(
-          "lastPrediction",
-          JSON.stringify(result)
-        )
+        const preview = canvas.toDataURL("image/jpeg")
+
+        sessionStorage.setItem("lastPrediction",JSON.stringify(result))
+        sessionStorage.setItem("lastPreview",preview)
+
+        stopCamera()
 
         onResult(result)
 
         router.push("/result")
 
-      } catch (err) {
-
-        console.error(err)
-
+      }catch(e){
+        console.error(e)
+        setError("Prediction failed")
       }
 
       setLoading(false)
 
-    }, "image/jpeg", 0.7)
+    },"image/jpeg",0.8)
 
   }
 
-  return (
+  return(
 
-    <div className="flex flex-col items-center gap-5 w-full">
+    <div className="flex flex-col items-center gap-4">
 
       {error && (
         <p className="text-red-500 text-sm">{error}</p>
       )}
 
-      {/* Camera */}
+      {/* Camera container */}
 
-      <div className="relative w-full max-w-md rounded-xl overflow-hidden shadow-lg">
+      <div className="relative w-full max-w-xs rounded-xl overflow-hidden shadow-lg">
 
         <video
           ref={videoRef}
           autoPlay
           muted
           playsInline
-          onLoadedMetadata={() => setCameraReady(true)}
-          className="w-full bg-black"
+          onLoadedMetadata={()=>setCameraReady(true)}
+          className="w-full h-[260px] object-cover bg-black"
         />
 
-        {/* Scanner overlay */}
+        {/* focus box */}
 
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
 
-          <div className="relative w-56 h-56 border-2 border-green-400 rounded-lg">
-
-            <div className="absolute -top-1 -left-1 w-6 h-6 border-l-4 border-t-4 border-green-400"></div>
-            <div className="absolute -top-1 -right-1 w-6 h-6 border-r-4 border-t-4 border-green-400"></div>
-            <div className="absolute -bottom-1 -left-1 w-6 h-6 border-l-4 border-b-4 border-green-400"></div>
-            <div className="absolute -bottom-1 -right-1 w-6 h-6 border-r-4 border-b-4 border-green-400"></div>
+          <div className="w-40 h-40 border-2 border-green-400 rounded-lg relative">
 
             <div className="absolute left-0 right-0 h-[2px] bg-green-400 animate-scan"></div>
 
@@ -197,23 +183,21 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
 
         </div>
 
-        {/* Live AI result */}
+        {/* scanning overlay */}
 
-        {prediction?.final_decision && (
+        {scanning && !loading && (
 
-          <div className="absolute bottom-3 left-3 bg-black/70 text-white text-sm px-3 py-2 rounded-lg">
+          <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-white">
 
-            <div className="font-semibold">
-              {prediction.final_decision.result}
-            </div>
+            <div className="w-12 h-12 border-4 border-green-400 border-t-transparent rounded-full animate-spin mb-3"/>
 
-            <div className="text-xs opacity-80">
-              {prediction.final_decision.confidence_percent.toFixed(1)}%
-            </div>
+            <p className="text-sm font-semibold">
+              AI scanning skin...
+            </p>
 
-            <div className="text-[11px] opacity-70 mt-1">
-              {prediction.final_decision.medical_advice}
-            </div>
+            <p className="text-xs opacity-80">
+              Hold camera steady
+            </p>
 
           </div>
 
@@ -221,16 +205,18 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
 
       </div>
 
-      <canvas ref={canvasRef} className="hidden" />
+      <canvas ref={canvasRef} className="hidden"/>
+
+      {/* manual capture */}
 
       <div className="flex gap-3">
 
         <button
           onClick={capture}
           disabled={loading || !cameraReady}
-          className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+          className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
         >
-          {loading ? "Analyzing..." : "Capture & Analyze"}
+          {loading ? "Analyzing..." : "Capture Now"}
         </button>
 
         {onFallback && (
