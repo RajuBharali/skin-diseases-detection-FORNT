@@ -14,57 +14,44 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
 
   const router = useRouter()
 
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const videoRef = useRef<HTMLVideoElement | null>(null)
+  const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
 
-  const lastFrameRef = useRef<ImageData | null>(null)
-  const lastResultsRef = useRef<string[]>([])
-  const predictingRef = useRef(false)
-
   const [cameraReady, setCameraReady] = useState(false)
+  const [loading, setLoading] = useState(false)
   const [prediction, setPrediction] = useState<PredictionResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [autoCaptured, setAutoCaptured] = useState(false)
-
-  const [movementScore, setMovementScore] = useState(0)
-  const [blurScore, setBlurScore] = useState(0)
-  const [skinRatio, setSkinRatio] = useState(0)
-
-  const SIZE = 224
-
-  /* =========================
-      CAMERA START
-  ========================== */
 
   useEffect(() => {
-
     startCamera()
-
-    return () => {
-      stopCamera()
-    }
-
+    return () => stopCamera()
   }, [])
 
   useEffect(() => {
+    if (!cameraReady) return
 
-    if (!cameraReady || autoCaptured) return
-
-    const interval = setInterval(scanFrame, 1200)
+    const interval = setInterval(() => {
+      scanFrame()
+    }, 2000)
 
     return () => clearInterval(interval)
 
-  }, [cameraReady, autoCaptured])
+  }, [cameraReady])
 
+  function stopCamera() {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop())
+      streamRef.current = null
+    }
+  }
 
   async function startCamera() {
-
     try {
 
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode: { ideal: "environment" },
+          facingMode: "environment",
           width: { ideal: 1280 },
           height: { ideal: 720 }
         }
@@ -77,233 +64,112 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
       }
 
     } catch (err) {
-
-      console.error(err)
-      setError("Camera permission denied or unavailable.")
-
+      setError("Camera access failed")
     }
-
   }
-
-
-  function stopCamera() {
-
-    if (!streamRef.current) return
-
-    streamRef.current.getTracks().forEach(track => track.stop())
-    streamRef.current = null
-
-  }
-
-
-  /* =========================
-      MOVEMENT DETECTION
-  ========================== */
-
-  function detectMovement(frame: ImageData) {
-
-    if (!lastFrameRef.current) {
-
-      lastFrameRef.current = frame
-      return 0
-
-    }
-
-    let diff = 0
-    const prev = lastFrameRef.current.data
-    const curr = frame.data
-
-    for (let i = 0; i < curr.length; i += 16) {
-      diff += Math.abs(curr[i] - prev[i])
-    }
-
-    const score = diff / (curr.length / 16)
-
-    lastFrameRef.current = frame
-    setMovementScore(score)
-
-    return score
-  }
-
-
-  /* =========================
-      BLUR DETECTION
-  ========================== */
-
-  function detectBlur(frame: ImageData) {
-
-    const d = frame.data
-    let sum = 0
-
-    for (let i = 0; i < d.length; i += 4) {
-
-      const gray = (d[i] + d[i + 1] + d[i + 2]) / 3
-      sum += gray * gray
-
-    }
-
-    const variance = sum / (d.length / 4)
-
-    setBlurScore(variance)
-
-    return variance
-  }
-
-
-  /* =========================
-      SKIN DETECTION
-  ========================== */
-
-  function detectSkin(frame: ImageData) {
-
-    const d = frame.data
-    let skin = 0
-    const total = d.length / 4
-
-    for (let i = 0; i < d.length; i += 4) {
-
-      const r = d[i]
-      const g = d[i + 1]
-      const b = d[i + 2]
-
-      if (
-        r > 95 &&
-        g > 40 &&
-        b > 20 &&
-        r > g &&
-        r > b &&
-        Math.abs(r - g) > 15
-      ) {
-        skin++
-      }
-
-    }
-
-    const ratio = skin / total
-
-    setSkinRatio(ratio)
-
-    return ratio
-  }
-
-
-  /* =========================
-      MAIN FRAME SCAN
-  ========================== */
 
   async function scanFrame() {
 
     if (!videoRef.current || !canvasRef.current) return
-    if (predictingRef.current || autoCaptured) return
 
+    const video = videoRef.current
     const canvas = canvasRef.current
     const ctx = canvas.getContext("2d")
 
     if (!ctx) return
 
+    const SIZE = 224
+
     canvas.width = SIZE
     canvas.height = SIZE
 
-    ctx.drawImage(videoRef.current, 0, 0, SIZE, SIZE)
-
-    const frame = ctx.getImageData(0, 0, SIZE, SIZE)
-
-    const movement = detectMovement(frame)
-    const blur = detectBlur(frame)
-    const skin = detectSkin(frame)
-
-    /* Skip bad frames */
-
-    if (movement > 35) return
-    if (blur < 400) return
-    if (skin < 0.15) return
-
-    predictingRef.current = true
+    ctx.drawImage(video, 0, 0, SIZE, SIZE)
 
     canvas.toBlob(async blob => {
 
-      if (!blob) {
-
-        predictingRef.current = false
-        return
-
-      }
+      if (!blob) return
 
       try {
 
-        const file = new File([blob], "scan.jpg", { type: "image/jpeg" })
+        const file = new File([blob], "frame.jpg", {
+          type: "image/jpeg"
+        })
 
-        const result: PredictionResponse = await predictImage(file)
+        const result = await predictImage(file)
 
         setPrediction(result)
 
-        const confidence = result.final_decision.confidence_percent
-        const label = result.final_decision.result
-
-        const history = [...lastResultsRef.current, label].slice(-3)
-        lastResultsRef.current = history
-
-        const stable = history.length === 3 && history.every(r => r === label)
-
-        let secondBest = 0
-
-        if (result.stage3) {
-
-          const vals = Object.values(result.stage3)
-          const sorted = [...vals].sort((a, b) => b - a)
-          secondBest = sorted[1] * 100
-
-        }
-
-        const diff = confidence - secondBest
-
-        if (
-          confidence >= 85 ||
-          (confidence >= 50 && diff >= 10) ||
-          stable
-        ) {
-
-          setAutoCaptured(true)
-
-          stopCamera()
-
-          const preview = canvas.toDataURL("image/jpeg")
-
-          sessionStorage.setItem("lastPrediction", JSON.stringify(result))
-          sessionStorage.setItem("lastPreview", preview)
-
-          onResult(result)
-
-          router.push("/result")
-
-        }
-
       } catch (err) {
 
-        console.error("Prediction error:", err)
+        console.error(err)
 
       }
 
-      predictingRef.current = false
-
-    }, "image/jpeg", 0.75)
+    }, "image/jpeg", 0.7)
 
   }
 
+  async function capture() {
 
-  /* =========================
-      UI
-  ========================== */
+    if (!videoRef.current || !canvasRef.current) return
+
+    const video = videoRef.current
+    const canvas = canvasRef.current
+    const ctx = canvas.getContext("2d")
+
+    if (!ctx) return
+
+    canvas.width = 224
+    canvas.height = 224
+
+    ctx.drawImage(video, 0, 0, 224, 224)
+
+    canvas.toBlob(async blob => {
+
+      if (!blob) return
+
+      setLoading(true)
+
+      try {
+
+        const file = new File([blob], "capture.jpg", {
+          type: "image/jpeg"
+        })
+
+        const result = await predictImage(file)
+
+        sessionStorage.setItem(
+          "lastPrediction",
+          JSON.stringify(result)
+        )
+
+        onResult(result)
+
+        router.push("/result")
+
+      } catch (err) {
+
+        console.error(err)
+
+      }
+
+      setLoading(false)
+
+    }, "image/jpeg", 0.7)
+
+  }
 
   return (
 
-    <div className="flex flex-col items-center gap-4">
+    <div className="flex flex-col items-center gap-5 w-full">
 
       {error && (
-        <div className="text-red-500 text-sm">{error}</div>
+        <p className="text-red-500 text-sm">{error}</p>
       )}
 
-      <div className="relative w-full max-w-sm rounded-xl overflow-hidden shadow-lg">
+      {/* Camera */}
+
+      <div className="relative w-full max-w-md rounded-xl overflow-hidden shadow-lg">
 
         <video
           ref={videoRef}
@@ -311,42 +177,43 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
           muted
           playsInline
           onLoadedMetadata={() => setCameraReady(true)}
-          className="w-full h-[320px] object-cover bg-black"
+          className="w-full bg-black"
         />
 
-        <canvas ref={canvasRef} className="hidden" />
-
-        {/* Scanner Frame */}
+        {/* Scanner overlay */}
 
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
 
-          <div className="w-44 h-44 border-2 border-green-400 rounded-lg relative">
+          <div className="relative w-56 h-56 border-2 border-green-400 rounded-lg">
 
-            <div className="absolute left-0 right-0 h-[2px] bg-green-400 animate-scan" />
+            <div className="absolute -top-1 -left-1 w-6 h-6 border-l-4 border-t-4 border-green-400"></div>
+            <div className="absolute -top-1 -right-1 w-6 h-6 border-r-4 border-t-4 border-green-400"></div>
+            <div className="absolute -bottom-1 -left-1 w-6 h-6 border-l-4 border-b-4 border-green-400"></div>
+            <div className="absolute -bottom-1 -right-1 w-6 h-6 border-r-4 border-b-4 border-green-400"></div>
+
+            <div className="absolute left-0 right-0 h-[2px] bg-green-400 animate-scan"></div>
 
           </div>
 
         </div>
 
-        {/* Status */}
+        {/* Live AI result */}
 
-        <div className="absolute top-3 left-3 text-xs text-white bg-black/60 px-2 py-1 rounded">
+        {prediction?.final_decision && (
 
-          {movementScore > 35 && "Hold camera steady"}
-          {blurScore < 400 && "Image blurry"}
-          {skinRatio < 0.15 && "Place skin inside scanner"}
+          <div className="absolute bottom-3 left-3 bg-black/70 text-white text-sm px-3 py-2 rounded-lg">
 
-        </div>
+            <div className="font-semibold">
+              {prediction.final_decision.result}
+            </div>
 
-        {/* Live Prediction */}
+            <div className="text-xs opacity-80">
+              {prediction.final_decision.confidence_percent.toFixed(1)}%
+            </div>
 
-        {prediction && (
-
-          <div className="absolute bottom-3 left-3 right-3 bg-black/70 text-white text-xs px-3 py-2 rounded">
-
-            {prediction.final_decision.result}
-            {" "}
-            ({prediction.final_decision.confidence_percent.toFixed(1)}%)
+            <div className="text-[11px] opacity-70 mt-1">
+              {prediction.final_decision.medical_advice}
+            </div>
 
           </div>
 
@@ -354,16 +221,28 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
 
       </div>
 
-      {onFallback && (
+      <canvas ref={canvasRef} className="hidden" />
+
+      <div className="flex gap-3">
 
         <button
-          onClick={onFallback}
-          className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded transition"
+          onClick={capture}
+          disabled={loading || !cameraReady}
+          className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
         >
-          Upload Image
+          {loading ? "Analyzing..." : "Capture & Analyze"}
         </button>
 
-      )}
+        {onFallback && (
+          <button
+            onClick={onFallback}
+            className="bg-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300"
+          >
+            Upload
+          </button>
+        )}
+
+      </div>
 
     </div>
 

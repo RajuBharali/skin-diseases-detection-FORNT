@@ -20,20 +20,14 @@
   }
 }
 
-/* Base Styles */
-
 body {
-  background-color: var(--background);
+  background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
 
+@keyframes scan-line {
 
-/* =========================
-   AI Scanner Animation
-   ========================= */
-
-@keyframes scanner-line {
   0% {
     transform: translateY(-120%);
     opacity: 0.2;
@@ -47,26 +41,21 @@ body {
     transform: translateY(120%);
     opacity: 0.2;
   }
+
 }
-
-
-/* Scanner Line */
 
 .animate-scan {
   position: absolute;
-  width: 100%;
   height: 2px;
-
+  width: 100%;
   background: linear-gradient(
     90deg,
-    transparent 0%,
-    #22c55e 50%,
-    transparent 100%
+    transparent,
+    #22c55e,
+    transparent
   );
-
-  animation: scanner-line 2.4s ease-in-out infinite;
-
+  animation: scan-line 2.4s ease-in-out infinite;
   box-shadow:
-    0 0 6px rgba(34, 197, 94, 0.7),
-    0 0 14px rgba(34, 197, 94, 0.5);
+    0 0 8px #22c55e,
+    0 0 16px #22c55e;
 }
