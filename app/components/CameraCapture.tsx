@@ -22,13 +22,26 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
   const [loading, setLoading] = useState(false)
   const [prediction, setPrediction] = useState<PredictionResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [autoCaptured, setAutoCaptured] = useState(false)
+
+  /* -------------------------
+     Start Camera
+  --------------------------*/
 
   useEffect(() => {
+
     startCamera()
+
     return () => stopCamera()
+
   }, [])
 
+  /* -------------------------
+     Scanner Loop
+  --------------------------*/
+
   useEffect(() => {
+
     if (!cameraReady) return
 
     const interval = setInterval(() => {
@@ -37,13 +50,23 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
 
     return () => clearInterval(interval)
 
-  }, [cameraReady])
+  }, [cameraReady, autoCaptured])
+
+  /* -------------------------
+     Camera Controls
+  --------------------------*/
 
   function stopCamera() {
+
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop())
+
+      streamRef.current
+        .getTracks()
+        .forEach(track => track.stop())
+
       streamRef.current = null
     }
+
   }
 
   async function startCamera() {
@@ -51,11 +74,13 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
     try {
 
       const stream = await navigator.mediaDevices.getUserMedia({
+
         video: {
           facingMode: "environment",
           width: { ideal: 640 },
           height: { ideal: 480 }
         }
+
       })
 
       streamRef.current = stream
@@ -65,13 +90,21 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
       }
 
     } catch (err) {
+
       setError("Camera access failed")
+
     }
+
   }
+
+  /* -------------------------
+     Scan Frame
+  --------------------------*/
 
   async function scanFrame() {
 
     if (!videoRef.current || !canvasRef.current) return
+    if (autoCaptured) return
 
     const video = videoRef.current
     const canvas = canvasRef.current
@@ -100,15 +133,41 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
 
         setPrediction(result)
 
+        const confidence =
+          result?.final_decision?.confidence_percent || 0
+
+        /* -------- AUTO DETECTION -------- */
+
+        if (confidence > 85 && !autoCaptured) {
+
+          setAutoCaptured(true)
+
+          stopCamera()
+
+          sessionStorage.setItem(
+            "lastPrediction",
+            JSON.stringify(result)
+          )
+
+          onResult(result)
+
+          router.push("/result")
+
+        }
+
       } catch (err) {
 
-        console.error(err)
+        console.error("Prediction failed", err)
 
       }
 
     }, "image/jpeg", 0.7)
 
   }
+
+  /* -------------------------
+     Manual Capture
+  --------------------------*/
 
   async function capture() {
 
@@ -146,6 +205,8 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
 
         onResult(result)
 
+        stopCamera()
+
         router.push("/result")
 
       } catch (err) {
@@ -159,6 +220,10 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
     }, "image/jpeg", 0.7)
 
   }
+
+  /* -------------------------
+     UI
+  --------------------------*/
 
   return (
 
@@ -187,22 +252,22 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
 
           <div className="relative w-44 h-44 border-2 border-green-400 rounded-xl">
 
-            {/* Corner markers */}
+            {/* Corners */}
 
             <div className="absolute -top-1 -left-1 w-5 h-5 border-l-4 border-t-4 border-green-400"></div>
             <div className="absolute -top-1 -right-1 w-5 h-5 border-r-4 border-t-4 border-green-400"></div>
             <div className="absolute -bottom-1 -left-1 w-5 h-5 border-l-4 border-b-4 border-green-400"></div>
             <div className="absolute -bottom-1 -right-1 w-5 h-5 border-r-4 border-b-4 border-green-400"></div>
 
-            {/* Scan line */}
+            {/* Scan Line */}
 
-            <div className="absolute left-0 right-0 h-[2px] bg-green-400 animate-scan"></div>
+            <div className="absolute left-0 right-0 animate-scan"></div>
 
           </div>
 
         </div>
 
-        {/* Live AI Result */}
+        {/* Live Prediction */}
 
         {prediction?.final_decision && (
 
@@ -214,7 +279,7 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
                 {prediction.final_decision.result}
               </span>
 
-              <span className="text-xs text-green-300">
+              <span className="text-green-300 text-xs">
                 {prediction.final_decision.confidence_percent.toFixed(1)}%
               </span>
 
@@ -232,7 +297,7 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
 
       <canvas ref={canvasRef} className="hidden" />
 
-      {/* Controls */}
+      {/* Buttons */}
 
       <div className="flex gap-3">
 
@@ -258,4 +323,5 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
     </div>
 
   )
+
 }
