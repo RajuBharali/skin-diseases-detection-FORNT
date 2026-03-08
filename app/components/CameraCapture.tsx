@@ -19,14 +19,27 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
   const streamRef = useRef<MediaStream | null>(null)
 
   const [cameraReady, setCameraReady] = useState(false)
-  const [loading, setLoading] = useState(false)
   const [prediction, setPrediction] = useState<PredictionResponse | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [autoCaptured, setAutoCaptured] = useState(false)
 
-  /* =============================
+  const [autoCaptured, setAutoCaptured] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  /* AI checks */
+
+  const [lastFrame, setLastFrame] = useState<ImageData | null>(null)
+  const [movementScore, setMovementScore] = useState(0)
+  const [blurScore, setBlurScore] = useState(0)
+  const [skinRatio, setSkinRatio] = useState(0)
+
+  const [lastResults, setLastResults] = useState<string[]>([])
+
+  const SIZE = 224
+
+
+  /* -------------------------
      Start Camera
-  ==============================*/
+  --------------------------*/
 
   useEffect(() => {
 
@@ -36,16 +49,19 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
 
   }, [])
 
-  /* =============================
-     Scanner Loop
-  ==============================*/
+
+  /* -------------------------
+     Scan Loop
+  --------------------------*/
 
   useEffect(() => {
 
     if (!cameraReady || autoCaptured) return
 
     const interval = setInterval(() => {
+
       scanFrame()
+
     }, 2000)
 
     return () => clearInterval(interval)
@@ -53,15 +69,15 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
   }, [cameraReady, autoCaptured])
 
 
-  /* =============================
+  /* -------------------------
      Camera Controls
-  ==============================*/
+  --------------------------*/
 
   function stopCamera() {
 
     if (streamRef.current) {
 
-      streamRef.current.getTracks().forEach(track => track.stop())
+      streamRef.current.getTracks().forEach(t => t.stop())
       streamRef.current = null
 
     }
@@ -91,15 +107,116 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
 
     } catch {
 
-      setError("Unable to access camera.")
+      setError("Camera access denied.")
 
     }
 
   }
 
-  /* =============================
-     Scan Frame (Auto Detection)
-  ==============================*/
+
+  /* -------------------------
+     Movement Detection
+  --------------------------*/
+
+  function detectMovement(frame: ImageData) {
+
+    if (!lastFrame) {
+
+      setLastFrame(frame)
+      return 0
+
+    }
+
+    let diff = 0
+
+    for (let i = 0; i < frame.data.length; i += 16) {
+
+      diff += Math.abs(frame.data[i] - lastFrame.data[i])
+
+    }
+
+    const score = diff / (frame.data.length / 16)
+
+    setMovementScore(score)
+    setLastFrame(frame)
+
+    return score
+
+  }
+
+
+  /* -------------------------
+     Blur Detection
+  --------------------------*/
+
+  function detectBlur(frame: ImageData) {
+
+    const data = frame.data
+
+    let variance = 0
+
+    for (let i = 0; i < data.length; i += 4) {
+
+      const gray = (data[i] + data[i+1] + data[i+2]) / 3
+      variance += gray * gray
+
+    }
+
+    variance = variance / (data.length / 4)
+
+    setBlurScore(variance)
+
+    return variance
+
+  }
+
+
+  /* -------------------------
+     Skin Detection
+  --------------------------*/
+
+  function detectSkin(frame: ImageData) {
+
+    const data = frame.data
+
+    let skin = 0
+    let total = data.length / 4
+
+    for (let i = 0; i < data.length; i += 4) {
+
+      const r = data[i]
+      const g = data[i+1]
+      const b = data[i+2]
+
+      if (
+
+        r > 95 &&
+        g > 40 &&
+        b > 20 &&
+        r > g &&
+        r > b &&
+        Math.abs(r-g) > 15
+
+      ) {
+
+        skin++
+
+      }
+
+    }
+
+    const ratio = skin / total
+
+    setSkinRatio(ratio)
+
+    return ratio
+
+  }
+
+
+  /* -------------------------
+     Scan Frame
+  --------------------------*/
 
   async function scanFrame() {
 
@@ -112,146 +229,117 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
 
     if (!ctx) return
 
-    const SIZE = 224
-
     canvas.width = SIZE
     canvas.height = SIZE
 
     ctx.drawImage(video, 0, 0, SIZE, SIZE)
 
+    const frame = ctx.getImageData(0,0,SIZE,SIZE)
+
+    const move = detectMovement(frame)
+    const blur = detectBlur(frame)
+    const skin = detectSkin(frame)
+
+    /* Skip bad frames */
+
+    if (move > 25) return
+    if (blur < 500) return
+    if (skin < 0.2) return
+
     canvas.toBlob(async blob => {
 
       if (!blob) return
 
       try {
 
-        const file = new File([blob], "frame.jpg", {
-          type: "image/jpeg"
-        })
+        const file = new File([blob], "scan.jpg", { type:"image/jpeg" })
 
         const result: PredictionResponse = await predictImage(file)
 
         setPrediction(result)
 
-        const confidence =
-          result?.final_decision?.confidence_percent || 0
+        const conf = result.final_decision.confidence_percent
+        const name = result.final_decision.result
 
-        /* AUTO DETECT RESULT */
+        /* Stable result detection */
 
-        if (confidence > 85 && !autoCaptured) {
+        const updated = [...lastResults, name].slice(-3)
+        setLastResults(updated)
 
-          setAutoCaptured(true)
+        const stable =
+          updated.length === 3 &&
+          updated.every(r => r === name)
 
-          stopCamera()
+        /* second probability */
 
-          const preview = canvas.toDataURL("image/jpeg")
+        let second = 0
 
-          sessionStorage.setItem(
-            "lastPrediction",
-            JSON.stringify(result)
-          )
+        if (result.stage3) {
 
-          sessionStorage.setItem(
-            "lastPreview",
-            preview
-          )
+          const vals = Object.values(result.stage3)
+          const sorted = [...vals].sort((a,b)=>b-a)
 
-          onResult(result)
-
-          router.push("/result")
+          second = sorted[1] * 100
 
         }
 
-      } catch (err) {
+        const diff = conf - second
 
-        console.error("Prediction failed:", err)
+        /* Smart Capture */
+
+        if (
+
+          conf >= 85 ||
+
+          (conf >= 50 && diff >= 10) ||
+
+          stable
+
+        ) {
+
+          if (!autoCaptured) {
+
+            setAutoCaptured(true)
+
+            stopCamera()
+
+            const preview = canvas.toDataURL("image/jpeg")
+
+            sessionStorage.setItem("lastPrediction", JSON.stringify(result))
+            sessionStorage.setItem("lastPreview", preview)
+
+            onResult(result)
+
+            router.push("/result")
+
+          }
+
+        }
+
+      } catch(e) {
+
+        console.error(e)
 
       }
 
-    }, "image/jpeg", 0.7)
+    },"image/jpeg",0.7)
 
   }
 
 
-  /* =============================
-     Manual Capture
-  ==============================*/
-
-  async function capture() {
-
-    if (!videoRef.current || !canvasRef.current) return
-
-    const video = videoRef.current
-    const canvas = canvasRef.current
-    const ctx = canvas.getContext("2d")
-
-    if (!ctx) return
-
-    canvas.width = 224
-    canvas.height = 224
-
-    ctx.drawImage(video, 0, 0, 224, 224)
-
-    const preview = canvas.toDataURL("image/jpeg")
-
-    canvas.toBlob(async blob => {
-
-      if (!blob) return
-
-      setLoading(true)
-
-      try {
-
-        const file = new File([blob], "capture.jpg", {
-          type: "image/jpeg"
-        })
-
-        const result: PredictionResponse = await predictImage(file)
-
-        sessionStorage.setItem(
-          "lastPrediction",
-          JSON.stringify(result)
-        )
-
-        sessionStorage.setItem(
-          "lastPreview",
-          preview
-        )
-
-        onResult(result)
-
-        stopCamera()
-
-        router.push("/result")
-
-      } catch {
-
-        setError("Prediction failed.")
-
-      }
-
-      setLoading(false)
-
-    }, "image/jpeg", 0.7)
-
-  }
-
-
-  /* =============================
+  /* -------------------------
      UI
-  ==============================*/
+  --------------------------*/
 
   return (
 
-    <div className="flex flex-col items-center gap-5 w-full">
+    <div className="flex flex-col items-center gap-4">
 
       {error && (
-        <p className="text-red-500 text-sm">{error}</p>
+        <div className="text-red-500">{error}</div>
       )}
 
-      {/* Camera */}
-
-      <div className="relative w-full max-w-sm rounded-2xl overflow-hidden shadow-xl border border-gray-200">
+      <div className="relative w-full max-w-sm rounded-xl overflow-hidden shadow">
 
         <video
           ref={videoRef}
@@ -262,51 +350,39 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
           className="w-full h-[320px] object-cover bg-black"
         />
 
-        {/* Scanner Overlay */}
+        {/* Scanner */}
 
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
 
-          <div className="relative w-44 h-44 border-2 border-green-400 rounded-xl">
+          <div className="relative w-44 h-44 border-2 border-green-400 rounded-lg">
 
-            {/* Corners */}
-
-            <div className="absolute -top-1 -left-1 w-5 h-5 border-l-4 border-t-4 border-green-400"></div>
-            <div className="absolute -top-1 -right-1 w-5 h-5 border-r-4 border-t-4 border-green-400"></div>
-            <div className="absolute -bottom-1 -left-1 w-5 h-5 border-l-4 border-b-4 border-green-400"></div>
-            <div className="absolute -bottom-1 -right-1 w-5 h-5 border-r-4 border-b-4 border-green-400"></div>
-
-            {/* Scan line */}
-
-            <div className="absolute left-0 right-0 animate-scan"></div>
+            <div className="absolute left-0 right-0 animate-scan h-[2px] bg-green-400"/>
 
           </div>
 
         </div>
 
+        {/* Status */}
 
-        {/* Live Prediction */}
+        <div className="absolute top-3 left-3 bg-black/60 text-white text-xs px-2 py-1 rounded">
 
-        {prediction?.final_decision && (
+          {movementScore > 25 && "Hold camera steady"}
 
-          <div className="absolute bottom-3 left-3 right-3 bg-black/70 backdrop-blur text-white rounded-lg px-3 py-2 shadow">
+          {blurScore < 500 && "Image blurry"}
 
-            <div className="flex justify-between text-sm font-semibold">
+          {skinRatio < 0.2 && "Place skin inside scanner"}
 
-              <span>
-                {prediction.final_decision.result}
-              </span>
+        </div>
 
-              <span className="text-green-300">
-                {prediction.final_decision.confidence_percent.toFixed(1)}%
-              </span>
+        {/* Live prediction */}
 
-            </div>
+        {prediction && (
 
-            <div className="text-xs opacity-80 mt-1">
+          <div className="absolute bottom-3 left-3 right-3 bg-black/70 text-white text-xs px-3 py-2 rounded">
 
-              {prediction.final_decision.medical_advice}
-
-            </div>
+            {prediction.final_decision.result}
+            {" "}
+            ({prediction.final_decision.confidence_percent.toFixed(1)}%)
 
           </div>
 
@@ -314,32 +390,16 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
 
       </div>
 
-
-      <canvas ref={canvasRef} className="hidden" />
-
-
-      {/* Buttons */}
-
-      <div className="flex gap-3">
+      {onFallback && (
 
         <button
-          onClick={capture}
-          disabled={loading || !cameraReady}
-          className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 shadow"
+          onClick={onFallback}
+          className="bg-gray-200 px-4 py-2 rounded"
         >
-          {loading ? "Analyzing..." : "Capture & Analyze"}
+          Upload Image
         </button>
 
-        {onFallback && (
-          <button
-            onClick={onFallback}
-            className="bg-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300"
-          >
-            Upload
-          </button>
-        )}
-
-      </div>
+      )}
 
     </div>
 
