@@ -44,7 +44,7 @@ export default function Home() {
               </div>
               <div className="flex flex-col">
                 <span className="text-lg sm:text-2xl font-bold tracking-tight text-white leading-tight">
-                  SkinDetection<span className="text-blue-300">.ai</span>
+                  Onelife<span className="text-blue-300">.ai</span>
                 </span>
                 <span className="text-[10px] sm:text-xs text-blue-200/80 uppercase tracking-widest font-semibold flex items-center gap-1">Skin Scanner</span>
               </div>
@@ -95,72 +95,16 @@ export default function Home() {
         </header>
 
         {/* Hero Content */}
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 flex flex-col lg:flex-row items-center">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 flex flex-col lg:grid lg:grid-cols-2 lg:gap-8 lg:items-center">
           
-          <div className="lg:w-1/2 pr-0 lg:pr-8 xl:pr-12">
-            <h2 className="text-4xl md:text-5xl lg:text-5xl font-extrabold mb-8 tracking-tight leading-tight">Analyze your skin health.</h2>
-            <p className="text-blue-100 text-lg mb-8 max-w-lg">Get immediate, AI-driven insights on your skin concerns before stepping into a doctor's office.</p>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
-              {/* Card 1 */}
-              <div className="bg-white/5 backdrop-blur-md border border-white/10 p-5 rounded-2xl hover:bg-white/10 transition-colors transform hover:-translate-y-1">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-8 h-8 rounded-lg bg-blue-400/20 flex items-center justify-center text-blue-300">
-                    <span className="material-icons text-lg">cloud_upload</span>
-                  </div>
-                  <span className="text-[10px] font-bold tracking-widest text-blue-300/80 uppercase">Step 01</span>
-                </div>
-                <h3 className="font-bold text-white text-base mb-1">Secure Upload</h3>
-                <p className="text-xs text-blue-100/70 leading-relaxed">Snap or upload a clear, focused photo of your mole or lesion privately.</p>
-              </div>
-
-              {/* Card 2 */}
-              <div className="bg-white/5 backdrop-blur-md border border-white/10 p-5 rounded-2xl hover:bg-white/10 transition-colors transform hover:-translate-y-1">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-8 h-8 rounded-lg bg-teal-400/20 flex items-center justify-center text-teal-300">
-                    <span className="material-icons text-lg">psychology</span>
-                  </div>
-                  <span className="text-[10px] font-bold tracking-widest text-teal-300/80 uppercase">Step 02</span>
-                </div>
-                <h3 className="font-bold text-white text-base mb-1">Neural Scan</h3>
-                <p className="text-xs text-blue-100/70 leading-relaxed">Our advanced algorithm assesses topography, pigment, and borders.</p>
-              </div>
-
-              {/* Card 3 */}
-              <div className="bg-white/5 backdrop-blur-md border border-white/10 p-5 rounded-2xl hover:bg-white/10 transition-colors transform hover:-translate-y-1">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-8 h-8 rounded-lg bg-indigo-400/20 flex items-center justify-center text-indigo-300">
-                    <span className="material-icons text-lg">dataset</span>
-                  </div>
-                  <span className="text-[10px] font-bold tracking-widest text-indigo-300/80 uppercase">Step 03</span>
-                </div>
-                <h3 className="font-bold text-white text-base mb-1">Clinical Matching</h3>
-                <p className="text-xs text-blue-100/70 leading-relaxed">Patterns are instantly cross-referenced against 100k+ clinical datasets.</p>
-              </div>
-
-              {/* Card 4 */}
-              <div className="bg-white/5 backdrop-blur-md border border-white/10 p-5 rounded-2xl hover:bg-white/10 transition-colors transform hover:-translate-y-1">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-8 h-8 rounded-lg bg-rose-400/20 flex items-center justify-center text-rose-300">
-                    <span className="material-icons text-lg">query_stats</span>
-                  </div>
-                  <span className="text-[10px] font-bold tracking-widest text-rose-300/80 uppercase">Step 04</span>
-                </div>
-                <h3 className="font-bold text-white text-base mb-1">Risk Profile</h3>
-                <p className="text-xs text-blue-100/70 leading-relaxed">View your comprehensive probability report and recommended actions.</p>
-              </div>
-            </div>
-
-            <Link href="/predict" className="inline-block bg-[#ff1e38] hover:bg-[#ff0020] text-white font-black text-sm px-10 py-4 rounded-full shadow-[0_8px_25px_rgba(255,30,56,0.5)] hover:shadow-[0_12px_30px_rgba(255,30,56,0.6)] hover:-translate-y-1 transition-all uppercase tracking-widest">
-              GET INSTANT RESULT
-            </Link>
-            
-            <p className="text-xs text-blue-200 mt-8 opacity-80 max-w-lg leading-relaxed">
-              * The scan result is not a diagnosis. To obtain an accurate diagnosis and a treatment recommendation, consult your doctor.
-            </p>
+          {/* 1. Header Text Container */}
+          <div className="w-full lg:pr-8 xl:pr-12 order-1 lg:col-start-1 lg:row-start-1 lg:self-end pt-4 lg:pt-0">
+            <h2 className="text-4xl md:text-5xl lg:text-5xl font-extrabold mb-4 lg:mb-8 tracking-tight leading-tight mt-6 lg:mt-0">Analyze your skin health.</h2>
+            <p className="text-blue-100 text-base sm:text-lg mb-0 max-w-lg">Get immediate, AI-driven insights on your skin concerns before stepping into a doctor's office.</p>
           </div>
           
-          <div className="w-full lg:w-1/2 mt-12 lg:mt-0 relative h-[380px] sm:h-[450px] lg:h-[500px] flex justify-center perspective-[1000px]">
+          {/* 2. Hero Images Container (Between Text & Cards on Mobile) */}
+          <div className="w-full order-2 lg:col-start-2 lg:row-start-1 lg:row-span-2 relative h-[380px] sm:h-[450px] lg:h-[500px] flex justify-center perspective-[1000px] my-10 lg:my-0 lg:ml-6">
              
             <style>{`
               @keyframes float-left {
@@ -227,27 +171,96 @@ export default function Home() {
                </div>
                
                {/* UI Elements on Right Screen */}
-               <div className="h-[40%] bg-white p-3 sm:p-5 flex flex-col justify-center">
-                 <div className="flex items-center gap-2 mb-2 sm:mb-3">
-                   <span className="material-icons text-green-500 text-xl sm:text-3xl">verified</span>
-                   <div>
-                     <h4 className="font-extrabold text-slate-900 text-[10px] sm:text-sm leading-tight">Benign Result</h4>
-                     <p className="text-[8px] sm:text-xs text-slate-500 font-medium tracking-tight">99.8% Match</p>
+               <div className="h-[40%] bg-white p-3 sm:p-5 flex flex-col justify-center relative overflow-hidden">
+                 <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-blue-50 to-transparent rounded-bl-[100px] z-0"></div>
+                 
+                 <div className="flex items-center gap-3 mb-3 relative z-10">
+                   <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-blue-100 to-indigo-50 flex items-center justify-center border border-blue-200 shadow-sm shrink-0">
+                      <span className="material-icons text-blue-600 text-lg sm:text-xl">healing</span>
+                   </div>
+                   <div className="flex-1">
+                     <h4 className="font-black text-slate-800 text-[11px] sm:text-[14px] leading-tight mb-0.5 flex items-center gap-1">
+                        Acne Severity
+                        <span className="material-icons text-blue-500 text-[12px] sm:text-[14px]">verified</span>
+                     </h4>
+                     <p className="text-[9px] sm:text-xs text-blue-600 font-bold tracking-tight">99.8% Neural Match</p>
                    </div>
                  </div>
                  
-                 <div className="w-full bg-slate-100 rounded-md sm:rounded-lg p-2 sm:p-3 flex justify-between items-center border border-slate-200">
-                    <span className="text-[8px] sm:text-xs font-bold text-slate-600">Risk Level:</span>
-                    <span className="bg-green-100 text-green-700 text-[8px] sm:text-[10px] font-black px-1.5 py-0.5 sm:px-2 rounded uppercase tracking-widest">Low</span>
+                 <div className="w-full bg-slate-50/80 rounded-lg p-2 sm:p-3 flex justify-between items-center border border-slate-200 shadow-inner relative z-10">
+                    <span className="text-[9px] sm:text-[10px] font-extrabold text-slate-500 uppercase tracking-widest">Risk Level:</span>
+                    <span className="bg-red-50 border border-red-200 text-red-600 text-[9px] sm:text-[10px] font-black px-2 py-1 rounded-[6px] uppercase tracking-widest shadow-sm flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_4px_rgba(239,68,68,0.8)] animate-pulse"></span> Elevated
+                    </span>
                  </div>
                </div>
             </div>
 
           </div>
           
+          {/* 3. Steps and CTA Button (Mobile: Bottom, Desktop: Bottom-Left) */}
+          <div className="w-full lg:pr-8 xl:pr-12 order-3 lg:col-start-1 lg:row-start-2 mt-2 lg:mt-0">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8 lg:mb-10">
+              {/* Card 1 */}
+              <div className="bg-white/5 backdrop-blur-md border border-white/10 p-5 rounded-2xl hover:bg-white/10 transition-colors transform hover:-translate-y-1">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-8 h-8 rounded-lg bg-blue-400/20 flex items-center justify-center text-blue-300">
+                    <span className="material-icons text-lg">cloud_upload</span>
+                  </div>
+                  <span className="text-[10px] font-bold tracking-widest text-blue-300/80 uppercase">Step 01</span>
+                </div>
+                <h3 className="font-bold text-white text-base mb-1">Secure Upload</h3>
+                <p className="text-xs text-blue-100/70 leading-relaxed">Snap or upload a clear, focused photo of your mole or lesion privately.</p>
+              </div>
+
+              {/* Card 2 */}
+              <div className="bg-white/5 backdrop-blur-md border border-white/10 p-5 rounded-2xl hover:bg-white/10 transition-colors transform hover:-translate-y-1">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-8 h-8 rounded-lg bg-teal-400/20 flex items-center justify-center text-teal-300">
+                    <span className="material-icons text-lg">psychology</span>
+                  </div>
+                  <span className="text-[10px] font-bold tracking-widest text-teal-300/80 uppercase">Step 02</span>
+                </div>
+                <h3 className="font-bold text-white text-base mb-1">Neural Scan</h3>
+                <p className="text-xs text-blue-100/70 leading-relaxed">Our advanced algorithm assesses topography, pigment, and borders.</p>
+              </div>
+
+              {/* Card 3 */}
+              <div className="bg-white/5 backdrop-blur-md border border-white/10 p-5 rounded-2xl hover:bg-white/10 transition-colors transform hover:-translate-y-1">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-8 h-8 rounded-lg bg-indigo-400/20 flex items-center justify-center text-indigo-300">
+                    <span className="material-icons text-lg">dataset</span>
+                  </div>
+                  <span className="text-[10px] font-bold tracking-widest text-indigo-300/80 uppercase">Step 03</span>
+                </div>
+                <h3 className="font-bold text-white text-base mb-1">Clinical Matching</h3>
+                <p className="text-xs text-blue-100/70 leading-relaxed">Patterns are instantly cross-referenced against 100k+ clinical datasets.</p>
+              </div>
+
+              {/* Card 4 */}
+              <div className="bg-white/5 backdrop-blur-md border border-white/10 p-5 rounded-2xl hover:bg-white/10 transition-colors transform hover:-translate-y-1">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-8 h-8 rounded-lg bg-rose-400/20 flex items-center justify-center text-rose-300">
+                    <span className="material-icons text-lg">query_stats</span>
+                  </div>
+                  <span className="text-[10px] font-bold tracking-widest text-rose-300/80 uppercase">Step 04</span>
+                </div>
+                <h3 className="font-bold text-white text-base mb-1">Risk Profile</h3>
+                <p className="text-xs text-blue-100/70 leading-relaxed">View your comprehensive probability report and recommended actions.</p>
+              </div>
+            </div>
+
+            <Link href="/predict" className="inline-flex items-center justify-center w-full sm:w-auto bg-[#ff1e38] hover:bg-[#ff0020] text-white font-black text-sm px-10 py-4 sm:py-5 rounded-full shadow-[0_8px_25px_rgba(255,30,56,0.5)] hover:shadow-[0_12px_30px_rgba(255,30,56,0.6)] hover:-translate-y-1 transition-all uppercase tracking-widest text-center">
+              GET INSTANT RESULT
+            </Link>
+            
+            <p className="text-[10px] sm:text-xs text-blue-200 mt-6 sm:mt-8 opacity-80 max-w-lg leading-relaxed mb-6 lg:mb-0">
+              * The scan result is not a diagnosis. To obtain an accurate diagnosis and a treatment recommendation, consult your doctor.
+            </p>
+          </div>
+
         </div>
       </div>
-
         {/* ===================== LOGO CLOUD / CREDIBILITY (SMALL SIZE) ===================== */}
         <section className="bg-gradient-to-b from-slate-50 to-white py-8 mb-16 sm:mb-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
@@ -367,7 +380,7 @@ export default function Home() {
             <div className="flex flex-col lg:flex-row gap-20">
               
               <div className="lg:w-1/3">
-                <h2 className="text-3xl md:text-5xl font-bold mb-6">How SkinDetection works</h2>
+                <h2 className="text-3xl md:text-5xl font-bold mb-6">How Onelife works</h2>
                 <p className="text-slate-400 text-lg mb-8">Three incredibly simple steps bridge the gap between uncertainty and actionable awareness.</p>
                 <Link href="/predict" className="inline-flex items-center justify-center gap-2 bg-white text-slate-900 font-bold px-8 py-4 rounded-full hover:bg-slate-100 transition-colors">
                   Try it yourself <span className="material-icons text-sm">arrow_forward</span>
@@ -420,27 +433,28 @@ export default function Home() {
         </section>
 
         {/* ===================== CTA & MISSION ===================== */}
-        <section id="about" className="max-w-5xl mx-auto px-6 mt-32 text-center">
-           <div className="bg-gradient-to-tr from-blue-50 to-teal-50 border border-blue-100 rounded-[3rem] p-12 md:p-20 shadow-2xl shadow-blue-900/5 relative overflow-hidden">
+        <section id="about" className="max-w-5xl mx-auto px-4 sm:px-6 mt-16 sm:mt-32 text-center">
+           <div className="bg-gradient-to-tr from-blue-50 to-teal-50 border border-blue-100 rounded-[2rem] sm:rounded-[3rem] p-6 sm:p-12 md:p-20 shadow-2xl shadow-blue-900/5 relative overflow-hidden">
              
-             <div className="absolute top-0 right-0 w-64 h-64 bg-white rounded-full blur-3xl opacity-60 pointer-events-none"></div>
+             <div className="absolute top-0 right-0 w-32 h-32 sm:w-64 sm:h-64 bg-white rounded-full blur-2xl sm:blur-3xl opacity-60 pointer-events-none"></div>
              
              <div className="relative z-10">
-               <span className="material-icons text-blue-500 text-6xl mb-6 bg-white p-4 rounded-3xl shadow-sm border border-slate-100">favorite</span>
-               <h2 className="text-4xl md:text-5xl font-extrabold text-slate-900 mb-6">Empowering preventive care.</h2>
-               <p className="text-slate-600 text-xl leading-relaxed mb-10 max-w-3xl mx-auto">
+               <span className="material-icons text-blue-500 text-4xl sm:text-6xl mb-4 sm:mb-6 bg-white p-3 sm:p-4 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-100">favorite</span>
+               <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-slate-900 mb-4 sm:mb-6 leading-tight">Empowering preventive care.</h2>
+               <p className="text-slate-600 text-base sm:text-lg md:text-xl leading-relaxed mb-8 sm:mb-10 max-w-3xl mx-auto">
                  We believe that early detection shouldn't be a privilege. By leveraging powerful artificial intelligence, we aim to provide an accessible first layer of skin-health awareness to everyone.
                </p>
                
-               <Link href="/predict" className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg px-12 py-5 rounded-full shadow-lg shadow-blue-600/30 transition-all transform hover:-translate-y-1">
+               <Link href="/predict" className="inline-block w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold text-base sm:text-lg px-8 sm:px-12 py-4 sm:py-5 rounded-full shadow-lg shadow-blue-600/30 transition-all transform hover:-translate-y-1">
                  Launch Analyzer Interface
                </Link>
 
-               <div className="mt-12 inline-block bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm px-6 py-4 rounded-xl text-left max-w-2xl">
-                 <p className="font-bold mb-1 flex items-center gap-2">
-                   <span className="material-icons text-base text-yellow-600">warning</span> Important Medical Disclaimer
+               <div className="mt-8 sm:mt-12 inline-block bg-yellow-50 border border-yellow-200 text-yellow-800 text-xs sm:text-sm px-4 sm:px-6 py-3 sm:py-4 rounded-xl text-left max-w-2xl w-full">
+                 <p className="font-bold mb-1 sm:mb-2 flex items-start sm:items-center gap-2">
+                   <span className="material-icons text-base sm:text-lg text-yellow-600 mt-0.5 sm:mt-0 shrink-0">warning</span> 
+                   <span>Important Medical Disclaimer</span>
                  </p>
-                 <p className="opacity-90">SkinDetection.ai is a software tool intended strictly for informational and educational purposes. It does not provide medical diagnoses and should never replace consultation with a certified physician or dermatologist.</p>
+                 <p className="opacity-90 leading-relaxed font-medium">Onelife.ai is a software tool intended strictly for informational and educational purposes. It does not provide medical diagnoses and should never replace consultation with a certified physician or dermatologist.</p>
                </div>
              </div>
            </div>
@@ -451,9 +465,9 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between text-slate-500 text-sm">
           <Link href="/" className="flex items-center gap-2 font-bold text-slate-800 mb-4 md:mb-0">
             <span className="material-icons text-blue-600">biotech</span>
-            SkinDetection.ai
+            Onelife.ai
           </Link>
-          <p>© {new Date().getFullYear()} SkinDetection AI Project. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Onelife AI Project. All rights reserved.</p>
           <div className="flex gap-6 mt-4 md:mt-0 font-medium">
             <Link href="#" className="hover:text-blue-600 transition-colors">Privacy Policy</Link>
             <Link href="#" className="hover:text-blue-600 transition-colors">Terms of Service</Link>

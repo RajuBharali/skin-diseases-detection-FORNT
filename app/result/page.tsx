@@ -173,7 +173,7 @@ export default function ResultPage() {
             </div>
             <div className="flex flex-col">
               <span className="text-lg sm:text-2xl font-bold tracking-tight text-white leading-tight">
-                SkinDetection<span className="text-blue-300">.ai</span>
+                Onelife<span className="text-blue-300">.ai</span>
               </span>
               <span className="text-[10px] sm:text-xs text-blue-200/80 uppercase tracking-widest font-semibold flex items-center gap-1">Analysis Results</span>
             </div>
@@ -298,6 +298,21 @@ export default function ResultPage() {
                <button className="relative z-10 w-full bg-white text-blue-700 font-extrabold py-3 sm:py-4 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all flex items-center justify-center gap-2 text-sm sm:text-base">
                   View Library <span className="material-icons text-base sm:text-lg">arrow_forward</span>
                </button>
+            </div>
+
+            {/* Connect with Doctor CTA */}
+            <div className="bg-gradient-to-r from-teal-500 to-emerald-600 rounded-[2rem] p-6 text-white shadow-xl shadow-teal-900/20 text-center relative overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">
+               <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-bl-[100px] z-0 pointer-events-none"></div>
+               <div className="relative z-10 flex flex-col items-center">
+                 <span className="material-icons mb-3 text-white/90 text-4xl">medical_services</span>
+                 <h3 className="text-lg font-extrabold mb-2 leading-snug">Need Professional Help?</h3>
+                 <p className="text-teal-50 text-xs sm:text-sm mb-6 leading-relaxed font-medium">
+                   Skip the waiting room. Schedule a secure online consultation with a board-certified dermatologist right now.
+                 </p>
+                 <button className="w-full bg-white text-teal-700 hover:bg-teal-50 font-extrabold py-3.5 sm:py-4 rounded-xl shadow-lg transition-transform flex justify-center items-center gap-2 text-sm sm:text-base">
+                   Get connected with doctor <span className="material-icons text-base sm:text-lg">open_in_new</span>
+                 </button>
+               </div>
             </div>
 
             {/* Disclaimer */}

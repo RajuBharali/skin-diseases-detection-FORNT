@@ -35,7 +35,7 @@ export default function PredictPage() {
             </div>
             <div className="flex flex-col">
               <span className="text-lg sm:text-2xl font-bold tracking-tight text-white leading-tight">
-                SkinDetection<span className="text-blue-300">.ai</span>
+                Onelife<span className="text-blue-300">.ai</span>
               </span>
               <span className="text-[10px] sm:text-xs text-blue-200/80 uppercase tracking-widest font-semibold flex items-center gap-1">Diagnostic Mode</span>
             </div>
@@ -105,7 +105,7 @@ export default function PredictPage() {
               <span className="material-icons text-base text-yellow-600">warning</span> Important Medical Disclaimer
             </p>
             <p className="text-xs text-slate-500 leading-relaxed max-w-3xl mx-auto">
-              SkinDetection.ai is an experimental diagnostic tool intended for informational purposes only. The neural network's assessment is based on visual patterns and may produce inaccurate results. It does not replace professional medical advice, diagnosis, or treatment. Always seek the advice of a qualified healthcare provider regarding any suspected skin condition.
+              Onelife.ai is an experimental diagnostic tool intended for informational purposes only. The neural network's assessment is based on visual patterns and may produce inaccurate results. It does not replace professional medical advice, diagnosis, or treatment. Always seek the advice of a qualified healthcare provider regarding any suspected skin condition.
             </p>
          </div>
       </div>
