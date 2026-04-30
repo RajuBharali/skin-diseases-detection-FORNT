@@ -39,6 +39,7 @@ function CircularGauge({ value }: { value: number }) {
   const cy = 110
   const circumference = 2 * Math.PI * r
   const pct = animated ? value / 100 : 0
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const offset = circumference - pct * circumference * 0.75
   const color = value >= 75 ? "#ef4444" : value >= 55 ? "#f97316" : "#2563eb"
   const track = "#e2e8f0"
@@ -109,10 +110,18 @@ function SeverityBadge({ pct }: { pct: number }) {
   )
 }
 
+interface AIAction {
+  icon: string
+  label: string
+  desc: string
+}
+
 export default function ResultPage() {
   const router = useRouter()
   const [data, setData] = useState<PredictionData | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
+  const [aiActions, setAiActions] = useState<AIAction[] | null>(null)
+  const [loadingActions, setLoadingActions] = useState(false)
 
   useEffect(() => {
     try {
@@ -121,8 +130,27 @@ export default function ResultPage() {
       if (raw) {
         const parsed: PredictionData = JSON.parse(raw)
         if (parsed.final_decision && parsed.final_decision.result) {
-          setData(parsed)
-          if (prev) setPreview(prev)
+          setTimeout(() => {
+            setData(parsed)
+            if (prev) setPreview(prev)
+          }, 0)
+
+          // Fetch dynamic AI guidance
+          setTimeout(() => setLoadingActions(true), 0)
+          fetch('/api/guidance', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ condition: parsed.final_decision.result })
+          })
+            .then(res => res.json())
+            .then(resData => {
+              if (resData.actions) {
+                setAiActions(resData.actions)
+              }
+            })
+            .catch(err => console.error("Error fetching AI guidance:", err))
+            .finally(() => setLoadingActions(false))
+
         } else router.push("/predict")
       } else router.push("/predict")
     } catch {
@@ -139,12 +167,14 @@ export default function ResultPage() {
   const { final_decision } = data
   const pct = final_decision.confidence_percent
 
-  const actions = [
+  const defaultActions = [
     { icon: "clinical_notes", label: "Consult a certified dermatologist", desc: "Book an appointment for professional evaluation" },
     { icon: "water_drop", label: "Keep affected skin moisturized", desc: "Use fragrance-free emollient creams twice daily" },
     { icon: "block", label: "Avoid scratching or irritation", desc: "Use cold compresses to soothe flare-ups" },
     { icon: "sanitizer", label: "Use gentle, unscented products", desc: "Switch to hypoallergenic cleansers and detergents" },
   ]
+  
+  const actionsToDisplay = aiActions || defaultActions
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-800 selection:bg-blue-500/30 overflow-hidden">
@@ -235,6 +265,7 @@ export default function ResultPage() {
                <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 items-start">
                   <div className="w-full sm:w-48 h-48 rounded-2xl overflow-hidden bg-slate-100 shadow-inner border-[4px] border-slate-50 shrink-0 relative">
                      {preview ? (
+                        // eslint-disable-next-line @next/next/no-img-element
                         <img src={preview} alt="Sample" className="w-full h-full object-cover" />
                      ) : (
                         <div className="absolute inset-0 flex items-center justify-center text-5xl opacity-30">🔬</div>
@@ -270,17 +301,23 @@ export default function ResultPage() {
                <h3 className="relative z-10 text-base sm:text-lg font-extrabold text-slate-800 mb-6 border-b border-slate-100 pb-4">Recommended Actions</h3>
                
                <div className="relative z-10 space-y-2">
-                  {actions.map((a, i) => (
-                     <div className="flex items-start gap-4 p-3 sm:p-4 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100 group" key={i}>
-                        <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform">
-                           <span className="material-icons text-lg sm:text-xl">{a.icon}</span>
-                        </div>
-                        <div>
-                           <h4 className="text-xs sm:text-sm font-bold text-slate-800 mb-0.5 sm:mb-1">{a.label}</h4>
-                           <p className="text-[10px] sm:text-xs text-slate-500 font-medium leading-relaxed">{a.desc}</p>
-                        </div>
+                  {loadingActions ? (
+                     <div className="flex justify-center items-center py-8">
+                       <div className="w-8 h-8 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
                      </div>
-                  ))}
+                  ) : (
+                     actionsToDisplay.map((a, i) => (
+                        <div className="flex items-start gap-4 p-3 sm:p-4 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100 group" key={i}>
+                           <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform">
+                              <span className="material-icons text-lg sm:text-xl">{a.icon}</span>
+                           </div>
+                           <div>
+                              <h4 className="text-xs sm:text-sm font-bold text-slate-800 mb-0.5 sm:mb-1">{a.label}</h4>
+                              <p className="text-[10px] sm:text-xs text-slate-500 font-medium leading-relaxed">{a.desc}</p>
+                           </div>
+                        </div>
+                     ))
+                  )}
                </div>
             </div>
 
