@@ -115,6 +115,7 @@ export default function ResultPage() {
   const [preview, setPreview] = useState<string | null>(null)
   const [aiActions, setAiActions] = useState<any[] | null>(null)
   const [aiSuggestion, setAiSuggestion] = useState<string | null>(null)
+  const [displayedSuggestion, setDisplayedSuggestion] = useState<string>('')
   const [loadingActions, setLoadingActions] = useState(false)
 
   useEffect(() => {
@@ -155,6 +156,20 @@ export default function ResultPage() {
       router.push("/predict")
     }
   }, [router])
+
+  // Typing Animation for AI Suggestion
+  useEffect(() => {
+    if (!aiSuggestion) return;
+    let i = 0;
+    setDisplayedSuggestion('');
+    const interval = setInterval(() => {
+      setDisplayedSuggestion(aiSuggestion.substring(0, i + 1));
+      i++;
+      if (i >= aiSuggestion.length) clearInterval(interval);
+    }, 25); // 25ms per character for smooth typing speed
+    
+    return () => clearInterval(interval);
+  }, [aiSuggestion])
 
   if (!data) return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -262,7 +277,10 @@ export default function ResultPage() {
                 <div>
                   <h3 className="text-xs sm:text-sm font-extrabold text-indigo-900 mb-2 uppercase tracking-widest">AI Clinical Evaluation</h3>
                   <p className="text-indigo-800/80 text-xs sm:text-sm leading-relaxed font-medium">
-                    {aiSuggestion}
+                    {displayedSuggestion}
+                    {displayedSuggestion.length < aiSuggestion.length && (
+                      <span className="animate-pulse inline-block w-1.5 h-3.5 sm:h-4 ml-1 bg-indigo-500 align-middle"></span>
+                    )}
                   </p>
                 </div>
               </div>
