@@ -114,6 +114,7 @@ export default function ResultPage() {
   const [data, setData] = useState<PredictionData | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [aiActions, setAiActions] = useState<any[] | null>(null)
+  const [aiSuggestion, setAiSuggestion] = useState<string | null>(null)
   const [loadingActions, setLoadingActions] = useState(false)
 
   useEffect(() => {
@@ -131,12 +132,18 @@ export default function ResultPage() {
           fetch('/api/guidance', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ condition: parsed.final_decision.result })
+            body: JSON.stringify({ 
+              condition: parsed.final_decision.result,
+              confidence: parsed.final_decision.confidence_percent 
+            })
           })
             .then(res => res.json())
             .then(resData => {
               if (resData.actions) {
                 setAiActions(resData.actions)
+              }
+              if (resData.suggestion) {
+                setAiSuggestion(resData.suggestion)
               }
             })
             .catch(err => console.error("Error fetching AI guidance:", err))
@@ -245,6 +252,21 @@ export default function ResultPage() {
                   <SeverityBadge pct={pct} />
                </div>
             </div>
+
+            {/* AI Clinical Suggestion */}
+            {aiSuggestion && (
+              <div className="bg-indigo-50 rounded-[2rem] p-6 sm:p-8 border border-indigo-100 flex gap-4 items-start shadow-sm transform transition-all duration-500 animate-fade-in-up">
+                <div className="w-12 h-12 rounded-xl bg-white text-indigo-600 flex items-center justify-center shrink-0 shadow-sm border border-indigo-100">
+                  <span className="material-icons text-2xl">psychology</span>
+                </div>
+                <div>
+                  <h3 className="text-xs sm:text-sm font-extrabold text-indigo-900 mb-2 uppercase tracking-widest">AI Clinical Evaluation</h3>
+                  <p className="text-indigo-800/80 text-xs sm:text-sm leading-relaxed font-medium">
+                    {aiSuggestion}
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Submitted Image Card */}
             <div className="bg-white rounded-[2rem] shadow-lg p-6 sm:p-8 border border-slate-100">
