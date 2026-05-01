@@ -39,7 +39,6 @@ function CircularGauge({ value }: { value: number }) {
   const cy = 110
   const circumference = 2 * Math.PI * r
   const pct = animated ? value / 100 : 0
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const offset = circumference - pct * circumference * 0.75
   const color = value >= 75 ? "#ef4444" : value >= 55 ? "#f97316" : "#2563eb"
   const track = "#e2e8f0"
@@ -110,17 +109,11 @@ function SeverityBadge({ pct }: { pct: number }) {
   )
 }
 
-interface AIAction {
-  icon: string
-  label: string
-  desc: string
-}
-
 export default function ResultPage() {
   const router = useRouter()
   const [data, setData] = useState<PredictionData | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
-  const [aiActions, setAiActions] = useState<AIAction[] | null>(null)
+  const [aiActions, setAiActions] = useState<any[] | null>(null)
   const [loadingActions, setLoadingActions] = useState(false)
 
   useEffect(() => {
@@ -130,13 +123,11 @@ export default function ResultPage() {
       if (raw) {
         const parsed: PredictionData = JSON.parse(raw)
         if (parsed.final_decision && parsed.final_decision.result) {
-          setTimeout(() => {
-            setData(parsed)
-            if (prev) setPreview(prev)
-          }, 0)
+          setData(parsed)
+          if (prev) setPreview(prev)
 
           // Fetch dynamic AI guidance
-          setTimeout(() => setLoadingActions(true), 0)
+          setLoadingActions(true)
           fetch('/api/guidance', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -265,7 +256,6 @@ export default function ResultPage() {
                <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 items-start">
                   <div className="w-full sm:w-48 h-48 rounded-2xl overflow-hidden bg-slate-100 shadow-inner border-[4px] border-slate-50 shrink-0 relative">
                      {preview ? (
-                        // eslint-disable-next-line @next/next/no-img-element
                         <img src={preview} alt="Sample" className="w-full h-full object-cover" />
                      ) : (
                         <div className="absolute inset-0 flex items-center justify-center text-5xl opacity-30">🔬</div>
