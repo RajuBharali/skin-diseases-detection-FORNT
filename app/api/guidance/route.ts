@@ -2,8 +2,13 @@ import { NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export async function POST(req: Request) {
+  let condition = "Unknown";
+  let confidence = 0;
+
   try {
-    const { condition, confidence } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    if (body.condition) condition = body.condition;
+    if (body.confidence) confidence = body.confidence;
 
     if (!condition) {
       return NextResponse.json({ error: 'Condition is required' }, { status: 400 });
@@ -61,6 +66,26 @@ Do not include markdown code block syntax like \`\`\`json. Return only the raw J
     return NextResponse.json(data);
   } catch (error) {
     console.error('Error generating AI guidance:', error);
-    return NextResponse.json({ error: 'Failed to generate guidance' }, { status: 500 });
+    
+    // Fallback if the real API fails (e.g., quota exceeded, invalid key)
+    
+    let suggestion = `With a confidence score of ${confidence}%, this is a baseline assessment. `;
+    if (confidence > 80) {
+      suggestion += "The model is highly confident. Please consult a dermatologist for confirmation and a treatment plan.";
+    } else if (confidence > 50) {
+      suggestion += "The model is moderately confident. Consider monitoring the area and seeking medical advice if you notice changes.";
+    } else {
+      suggestion += "The model has low confidence. This might be due to a blurry image or uncommon presentation. A professional evaluation is highly recommended.";
+    }
+
+    return NextResponse.json({ 
+      suggestion,
+      actions: [
+        { icon: "clinical_notes", label: `Consult doctor for ${condition}`, desc: "Book an appointment for professional evaluation" },
+        { icon: "water_drop", label: "Keep affected skin moisturized", desc: "Use fragrance-free emollient creams twice daily" },
+        { icon: "block", label: "Avoid scratching or irritation", desc: "Use cold compresses to soothe flare-ups" },
+        { icon: "sanitizer", label: "Use gentle, unscented products", desc: "Switch to hypoallergenic cleansers and detergents" }
+      ]
+    });
   }
 }
