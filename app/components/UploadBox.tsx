@@ -99,6 +99,8 @@ export default function UploadBox({ onSwitchToCamera }: UploadBoxProps) {
       if (preview) {
         sessionStorage.setItem("lastPreview", preview)
       }
+      sessionStorage.setItem("patientAge", String(age))
+      sessionStorage.setItem("patientGender", gender)
       router.push("/result")
     } catch (e: unknown) {
       const errorMessage = e instanceof Error ? e.message : "Analysis failed. Please try again."
@@ -231,62 +233,71 @@ export default function UploadBox({ onSwitchToCamera }: UploadBoxProps) {
 
         {/* RIGHT INFO */}
         <div className="flex flex-col gap-6 pt-4">
-          <div className="bg-white rounded-2xl border border-slate-100 p-6 sm:p-8 shadow-sm">
-            <h3 className="text-xs tracking-widest font-extrabold text-[#023b7a] mb-6 uppercase">Client Information</h3>
+          <div className="bg-white rounded-[2rem] border border-slate-100 p-6 sm:p-8 shadow-sm">
+            <div className="flex items-center gap-3 mb-6 sm:mb-8">
+              <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center border border-blue-100">
+                <span className="material-icons text-blue-600 text-sm">person</span>
+              </div>
+              <h3 className="text-[11px] tracking-[0.15em] font-black text-[#023b7a] uppercase">Client Information</h3>
+            </div>
+            
             <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Name</label>
+              <div className="group">
+                <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-2 ml-1 transition-colors group-focus-within:text-blue-600">Full Name</label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. John Doe"
-                  className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                  className="w-full bg-slate-50/50 border border-slate-100 text-slate-800 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-blue-500 focus:bg-white transition-all shadow-sm group-hover:border-slate-200"
                 />
               </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Email</label>
+              <div className="group">
+                <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-2 ml-1 transition-colors group-focus-within:text-blue-600">Email Address</label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="e.g. john@example.com"
-                  className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                  className="w-full bg-slate-50/50 border border-slate-100 text-slate-800 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-blue-500 focus:bg-white transition-all shadow-sm group-hover:border-slate-200"
                 />
               </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Phone Number</label>
+              <div className="group">
+                <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-2 ml-1 transition-colors group-focus-within:text-blue-600">Phone Number</label>
                 <input
                   type="tel"
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
-                  placeholder="e.g. +123456789"
-                  className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                  placeholder="e.g. +1 234 567 890"
+                  className="w-full bg-slate-50/50 border border-slate-100 text-slate-800 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-blue-500 focus:bg-white transition-all shadow-sm group-hover:border-slate-200"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Age</label>
+                <div className="group">
+                  <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-2 ml-1">Age</label>
                   <input
                     type="number"
                     value={age}
                     onChange={(e) => setAge(e.target.value === "" ? "" : Number(e.target.value))}
-                    placeholder="e.g. 25"
-                    className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                    placeholder="Age"
+                    className="w-full bg-slate-50/50 border border-slate-100 text-slate-800 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-blue-500 focus:bg-white transition-all shadow-sm"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Gender</label>
-                  <select
-                    value={gender}
-                    onChange={(e) => setGender(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition-colors"
-                  >
-                    <option value="">Select</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Other">Other</option>
-                  </select>
+                <div className="group relative">
+                  <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-2 ml-1">Gender</label>
+                  <div className="relative">
+                    <select
+                      value={gender}
+                      onChange={(e) => setGender(e.target.value)}
+                      className="w-full bg-slate-50/50 border border-slate-100 text-slate-800 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-blue-500 focus:bg-white transition-all shadow-sm appearance-none cursor-pointer pr-10"
+                    >
+                      <option value="">Select</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Other">Other</option>
+                    </select>
+                    <span className="material-icons absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-lg">expand_more</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -295,13 +306,13 @@ export default function UploadBox({ onSwitchToCamera }: UploadBoxProps) {
           <button
             onClick={analyze}
             disabled={!file || loading}
-            className={`w-full py-5 rounded-2xl font-extrabold text-lg text-white transition-all duration-300 flex items-center justify-center gap-3 ${
+            className={`w-full py-5 rounded-2xl font-extrabold text-lg text-white transition-all duration-300 flex items-center justify-center gap-3 shadow-xl ${
               file && !loading
-                ? "bg-[#ff1e38] hover:bg-[#e00020] hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(255,30,56,0.4)] cursor-pointer"
-                : "bg-slate-300 cursor-not-allowed text-slate-500"
+                ? "bg-gradient-to-r from-red-500 to-rose-700 hover:shadow-red-500/30 hover:-translate-y-1"
+                : "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed shadow-none"
             }`}
           >
-             {loading ? <span className="material-icons animate-spin">refresh</span> : null}
+             {loading ? <span className="material-icons animate-spin">refresh</span> : <span className="material-icons">biotech</span>}
              {loading ? "ANALYZING TISSUE..." : "ANALYZE TISSUE NOW"}
           </button>
 

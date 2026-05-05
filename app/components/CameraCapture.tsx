@@ -132,6 +132,8 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
 
         sessionStorage.setItem("lastPrediction",JSON.stringify(result))
         sessionStorage.setItem("lastPreview",preview)
+        sessionStorage.setItem("patientAge", String(age))
+        sessionStorage.setItem("patientGender", gender)
 
         stopCamera()
         onResult(result)
@@ -192,25 +194,26 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
 
         <canvas ref={canvasRef} className="hidden"/>
 
-        <div className="flex gap-4 w-full">
+        <div className="flex flex-col sm:flex-row gap-4 w-full">
           <button
             onClick={capture}
             disabled={loading || !cameraReady}
-            className={`flex-1 py-4 rounded-2xl font-extrabold text-white transition-all shadow-lg flex items-center justify-center gap-2 ${
+            className={`flex-[2] py-4 rounded-2xl font-extrabold text-white transition-all shadow-lg flex items-center justify-center gap-2 ${
               cameraReady && !loading 
                 ? "bg-gradient-to-r from-cyan-500 to-blue-600 hover:shadow-cyan-500/30 hover:-translate-y-0.5" 
-                : "bg-slate-300 opacity-50 cursor-not-allowed"
+                : "bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed shadow-none"
             }`}
           >
-            <span className="material-icons">photo_camera</span>
+            <span className="material-icons">{loading ? "refresh" : "photo_camera"}</span>
             {loading ? "Analyzing..." : "Capture & Analyze"}
           </button>
 
           {onFallback && (
             <button
               onClick={onFallback}
-              className="bg-white border border-slate-200 text-slate-600 px-6 py-4 rounded-2xl font-bold hover:bg-slate-50 transition-colors shadow-sm"
+              className="flex-1 bg-white border border-slate-200 text-slate-600 px-6 py-4 rounded-2xl font-bold hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm flex items-center justify-center gap-2"
             >
+              <span className="material-icons text-lg">upload_file</span>
               Upload
             </button>
           )}
@@ -219,71 +222,74 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
 
       {/* RIGHT: PATIENT INFO */}
       <div className="flex flex-col gap-6">
-        <div className="bg-white rounded-[2rem] border border-slate-100 p-8 shadow-[0_10px_40px_rgba(0,0,0,0.04)]">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+        <div className="bg-white rounded-[2rem] border border-slate-100 p-6 sm:p-8 shadow-[0_10px_40px_rgba(0,0,0,0.04)]">
+          <div className="flex items-center gap-3 mb-6 sm:mb-8">
+            <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center border border-blue-100">
               <span className="material-icons text-blue-600 text-sm">person</span>
             </div>
-            <h3 className="text-xs tracking-[0.2em] font-black text-[#023b7a] uppercase">Patient Details</h3>
+            <h3 className="text-[11px] tracking-[0.15em] font-black text-[#023b7a] uppercase">Patient Details</h3>
           </div>
           
-          <div className="space-y-5">
+          <div className="space-y-4 sm:space-y-5">
             <div className="group">
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1 transition-colors group-focus-within:text-blue-600">Full Name</label>
+              <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-2 ml-1 transition-colors group-focus-within:text-blue-600">Full Name</label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Enter patient name"
-                className="w-full bg-slate-50 border border-slate-100 text-slate-800 rounded-2xl px-5 py-4 text-sm focus:outline-none focus:border-blue-500 focus:bg-white transition-all shadow-sm group-hover:border-slate-200"
+                className="w-full bg-slate-50/50 border border-slate-100 text-slate-800 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-blue-500 focus:bg-white transition-all shadow-sm group-hover:border-slate-200"
               />
             </div>
             
             <div className="group">
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1 transition-colors group-focus-within:text-blue-600">Email Address</label>
+              <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-2 ml-1 transition-colors group-focus-within:text-blue-600">Email Address</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="patient@example.com"
-                className="w-full bg-slate-50 border border-slate-100 text-slate-800 rounded-2xl px-5 py-4 text-sm focus:outline-none focus:border-blue-500 focus:bg-white transition-all shadow-sm group-hover:border-slate-200"
+                className="w-full bg-slate-50/50 border border-slate-100 text-slate-800 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-blue-500 focus:bg-white transition-all shadow-sm group-hover:border-slate-200"
               />
             </div>
 
             <div className="group">
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1 transition-colors group-focus-within:text-blue-600">Phone Number</label>
+              <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-2 ml-1 transition-colors group-focus-within:text-blue-600">Phone Number</label>
               <input
                 type="tel"
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
                 placeholder="+1 234 567 890"
-                className="w-full bg-slate-50 border border-slate-100 text-slate-800 rounded-2xl px-5 py-4 text-sm focus:outline-none focus:border-blue-500 focus:bg-white transition-all shadow-sm group-hover:border-slate-200"
+                className="w-full bg-slate-50/50 border border-slate-100 text-slate-800 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-blue-500 focus:bg-white transition-all shadow-sm group-hover:border-slate-200"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-5">
+            <div className="grid grid-cols-2 gap-4 sm:gap-5">
               <div className="group">
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Age</label>
+                <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-2 ml-1">Age</label>
                 <input
                   type="number"
                   value={age}
                   onChange={(e) => setAge(e.target.value === "" ? "" : Number(e.target.value))}
                   placeholder="Age"
-                  className="w-full bg-slate-50 border border-slate-100 text-slate-800 rounded-2xl px-5 py-4 text-sm focus:outline-none focus:border-blue-500 focus:bg-white transition-all shadow-sm"
+                  className="w-full bg-slate-50/50 border border-slate-100 text-slate-800 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-blue-500 focus:bg-white transition-all shadow-sm"
                 />
               </div>
-              <div className="group">
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Gender</label>
-                <select
-                  value={gender}
-                  onChange={(e) => setGender(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-100 text-slate-800 rounded-2xl px-5 py-4 text-sm focus:outline-none focus:border-blue-500 focus:bg-white transition-all shadow-sm appearance-none cursor-pointer"
-                >
-                  <option value="">Select</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                </select>
+              <div className="group relative">
+                <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-2 ml-1">Gender</label>
+                <div className="relative">
+                  <select
+                    value={gender}
+                    onChange={(e) => setGender(e.target.value)}
+                    className="w-full bg-slate-50/50 border border-slate-100 text-slate-800 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-blue-500 focus:bg-white transition-all shadow-sm appearance-none cursor-pointer pr-10"
+                  >
+                    <option value="">Select</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                  <span className="material-icons absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-lg">expand_more</span>
+                </div>
               </div>
             </div>
           </div>

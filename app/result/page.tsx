@@ -130,6 +130,9 @@ export default function ResultPage() {
     try {
       const raw = sessionStorage.getItem("lastPrediction")
       const prev = sessionStorage.getItem("lastPreview")
+      const age = sessionStorage.getItem("patientAge")
+      const gender = sessionStorage.getItem("patientGender")
+
       if (raw) {
         const parsed: PredictionData = JSON.parse(raw)
         if (parsed.final_decision && parsed.final_decision.result) {
@@ -143,7 +146,9 @@ export default function ResultPage() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
               condition: parsed.final_decision.result,
-              confidence: parsed.final_decision.confidence_percent 
+              confidence: parsed.final_decision.confidence_percent,
+              age: age,
+              gender: gender
             })
           })
             .then(res => res.json())

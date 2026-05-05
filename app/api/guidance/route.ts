@@ -9,6 +9,8 @@ export async function POST(req: Request) {
     const body = await req.json().catch(() => ({}));
     if (body.condition) condition = body.condition;
     if (body.confidence) confidence = body.confidence;
+    const age = body.age || "unknown";
+    const gender = body.gender || "unknown";
 
     if (!condition) {
       return NextResponse.json({ error: 'Condition is required' }, { status: 400 });
@@ -42,30 +44,30 @@ export async function POST(req: Request) {
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
     const prompt = `You are an AI dermatologist assistant. The user has received an AI image analysis prediction of "${condition}" for their skin with a confidence score of ${confidence}%. 
+    
+    Patient Profile:
+    - Age: ${age}
+    - Gender: ${gender}
 
-If the condition implies the skin is healthy, normal, or clear, reassure the user and DO NOT recommend seeing a doctor. Instead, recommend standard skincare maintenance like sunscreen and moisturizing.
-If the condition is a medical issue (like bcc, melanoma, eczema, etc.), provide appropriate medical advice and urge them to see a doctor.
+    Consider their age and gender when providing the recommendation. (e.g., skincare advice for a teenager with acne might differ from an elderly person).
 
-Return the result strictly as a JSON object containing two keys: "suggestion" and "actions".
+    If the condition implies the skin is healthy, normal, or clear, reassure the user and DO NOT recommend seeing a doctor. Instead, recommend standard skincare maintenance like sunscreen and moisturizing.
+    If the condition is a medical issue (like bcc, melanoma, eczema, etc.), provide appropriate medical advice and urge them to see a doctor.
 
-1. "suggestion": A short paragraph (max 30 words) explaining how seriously they should take this result given the ${confidence}% confidence score.
-2. "actions": An array of 4 recommended actions they should take. Each action object must have the keys:
-   - icon: A valid Google Material icon name (e.g. "medical_services", "water_drop", "block", "sanitizer", "healing", "spa", "local_hospital", "wb_sunny", "face")
-   - label: A short, actionable title (max 5 words)
-   - desc: A short description (max 10 words)
+    Return the result strictly as a JSON object containing two keys: "suggestion" and "actions".
 
-Example output:
-{
-  "suggestion": "Given the high confidence score, it is strongly advised to schedule a consultation with a dermatologist for a professional biopsy and treatment plan.",
-  "actions": [
-    { "icon": "medical_services", "label": "Consult a certified dermatologist", "desc": "Book an appointment for professional evaluation" }
-  ]
-}
-Do not include markdown code block syntax like \`\`\`json. Return only the raw JSON object.`;
+    1. "suggestion": A short paragraph (max 30 words) explaining how seriously they should take this result given the ${confidence}% confidence score and their profile.
+    2. "actions": An array of 4 recommended actions they should take. Each action object must have the keys:
+       - icon: A valid Google Material icon name (e.g. "medical_services", "water_drop", "block", "sanitizer", "healing", "spa", "local_hospital", "wb_sunny", "face", "health_and_safety", "info", "warning")
+       - label: A short, actionable title (max 5 words)
+       - desc: A short description (max 12 words)
+
+    Return only the raw JSON object. Do not include markdown formatting.`;
 
     const result = await model.generateContent(prompt);
     const text = result.response.text();
-    const data = JSON.parse(text.replace(/```json/g, '').replace(/```/g, '').trim());
+    const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    const data = JSON.parse(cleanText);
 
     return NextResponse.json(data);
   } catch (error) {
