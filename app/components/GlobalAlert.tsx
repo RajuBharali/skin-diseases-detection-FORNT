@@ -9,7 +9,8 @@ export default function GlobalAlert() {
     // Only show if user hasn't dismissed it this session
     const hasDismissed = sessionStorage.getItem("onelife_alert_dismissed")
     if (!hasDismissed) {
-      setIsVisible(true)
+      const timer = setTimeout(() => setIsVisible(true), 500)
+      return () => clearTimeout(timer)
     }
   }, [])
 

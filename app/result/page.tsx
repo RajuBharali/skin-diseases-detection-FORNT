@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import Image from "next/image"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface FinalDecision {
@@ -11,6 +12,12 @@ interface FinalDecision {
 }
 interface PredictionData {
   final_decision: FinalDecision
+}
+
+interface AIAction {
+  icon: string
+  label: string
+  desc: string
 }
 
 // ─── Animated Counter ─────────────────────────────────────────────────────────
@@ -37,9 +44,9 @@ function CircularGauge({ value }: { value: number }) {
   const r = 88
   const cx = 110
   const cy = 110
-  const circumference = 2 * Math.PI * r
-  const pct = animated ? value / 100 : 0
-  const offset = circumference - pct * circumference * 0.75
+  // const circumference = 2 * Math.PI * r
+  // const pct = animated ? value / 100 : 0
+  // const offset = circumference - pct * circumference * 0.75
   const color = value >= 75 ? "#ef4444" : value >= 55 ? "#f97316" : "#2563eb"
   const track = "#e2e8f0"
 
@@ -113,9 +120,10 @@ export default function ResultPage() {
   const router = useRouter()
   const [data, setData] = useState<PredictionData | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
-  const [aiActions, setAiActions] = useState<any[] | null>(null)
+  const [aiActions, setAiActions] = useState<AIAction[] | null>(null)
   const [aiSuggestion, setAiSuggestion] = useState<string | null>(null)
   const [displayedSuggestion, setDisplayedSuggestion] = useState<string>('')
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [loadingActions, setLoadingActions] = useState(false)
 
   useEffect(() => {
@@ -194,7 +202,7 @@ export default function ResultPage() {
     return valid.includes(icon) ? icon : "healing";
   };
 
-  const defaultActions = [
+  const defaultActions: AIAction[] = [
     { icon: "medical_services", label: "Consult a certified dermatologist", desc: "Book an appointment for professional evaluation" },
     { icon: "water_drop", label: "Keep affected skin moisturized", desc: "Use fragrance-free emollient creams twice daily" },
     { icon: "block", label: "Avoid scratching or irritation", desc: "Use cold compresses to soothe flare-ups" },
@@ -276,7 +284,7 @@ export default function ResultPage() {
                      <span className="text-blue-600">{final_decision.result}</span>
                   </h2>
                   <p className="text-xs sm:text-sm text-slate-500 mb-6 leading-relaxed max-w-md">
-                     Our AI model analyzed your skin sample and identified possible signs of {final_decision.result.toLowerCase()}. This is a baseline assessment and not a medical diagnosis.
+                    Our AI model analyzed your skin sample and identified possible signs of {final_decision.result.toLowerCase()}. This is a baseline assessment and not a medical diagnosis.
                   </p>
                   <SeverityBadge pct={pct} />
                </div>
@@ -310,7 +318,7 @@ export default function ResultPage() {
                <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 items-start">
                   <div className="w-full sm:w-48 h-48 rounded-2xl overflow-hidden bg-slate-100 shadow-inner border-[4px] border-slate-50 shrink-0 relative">
                      {preview ? (
-                        <img src={preview} alt="Sample" className="w-full h-full object-cover" />
+                        <Image src={preview} alt="Sample" fill className="object-cover" />
                      ) : (
                         <div className="absolute inset-0 flex items-center justify-center text-5xl opacity-30">🔬</div>
                      )}

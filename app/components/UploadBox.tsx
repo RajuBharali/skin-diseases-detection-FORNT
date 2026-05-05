@@ -3,8 +3,9 @@
 import { useState, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { predictImage } from "@/app/lib/api"
-import Cropper from "react-easy-crop"
+import Cropper, { Area } from "react-easy-crop"
 import { getCroppedImg } from "@/app/lib/cropImage"
+import Image from "next/image"
 
 interface UploadBoxProps {
   onSwitchToCamera?: () => void
@@ -30,7 +31,7 @@ export default function UploadBox({ onSwitchToCamera }: UploadBoxProps) {
   const [isCropping, setIsCropping] = useState(false)
   const [crop, setCrop] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null)
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null)
   const [preCropImage, setPreCropImage] = useState<string | null>(null)
 
   const formatBytes = (bytes: number) => {
@@ -64,7 +65,7 @@ export default function UploadBox({ onSwitchToCamera }: UploadBoxProps) {
     if (inputRef.current) inputRef.current.value = ""
   }
 
-  const onCropComplete = useCallback((croppedArea: any, croppedAreaPixels: any) => {
+  const onCropComplete = useCallback((_croppedArea: Area, croppedAreaPixels: Area) => {
     setCroppedAreaPixels(croppedAreaPixels)
   }, [])
 
@@ -99,8 +100,9 @@ export default function UploadBox({ onSwitchToCamera }: UploadBoxProps) {
         sessionStorage.setItem("lastPreview", preview)
       }
       router.push("/result")
-    } catch (e: any) {
-      setError(e.message || "Analysis failed. Please try again.")
+    } catch (e: unknown) {
+      const errorMessage = e instanceof Error ? e.message : "Analysis failed. Please try again."
+      setError(errorMessage)
     }
 
     setLoading(false)
@@ -110,7 +112,7 @@ export default function UploadBox({ onSwitchToCamera }: UploadBoxProps) {
   if (isCropping && preCropImage) {
     return (
       <div className="flex flex-col items-center max-w-2xl mx-auto py-4 bg-white rounded-3xl w-full">
-        <h2 className="text-2xl font-bold text-[#023b7a] mb-6">Let's crop the photo!</h2>
+        <h2 className="text-2xl font-bold text-[#023b7a] mb-6">Let&apos;s crop the photo!</h2>
         
         <div className="relative w-full h-[300px] mb-8 bg-black rounded-lg overflow-hidden">
           <Cropper
@@ -174,10 +176,11 @@ export default function UploadBox({ onSwitchToCamera }: UploadBoxProps) {
           >
             {preview ? (
               <>
-                <img
+                <Image
                   src={preview}
                   alt="Preview"
-                  className="max-w-full max-h-full object-contain"
+                  fill
+                  className="object-contain"
                 />
 
                 {file && (

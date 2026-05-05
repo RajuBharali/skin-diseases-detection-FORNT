@@ -105,7 +105,7 @@ export default function PredictPage() {
               <span className="material-icons text-base text-yellow-600">warning</span> Important Medical Disclaimer
             </p>
             <p className="text-xs text-slate-500 leading-relaxed max-w-3xl mx-auto">
-              Onelife.ai is an experimental diagnostic tool intended for informational purposes only. The neural network's assessment is based on visual patterns and may produce inaccurate results. It does not replace professional medical advice, diagnosis, or treatment. Always seek the advice of a qualified healthcare provider regarding any suspected skin condition.
+              Onelife.ai is an experimental diagnostic tool intended for informational purposes only. The neural network&apos;s assessment is based on visual patterns and may produce inaccurate results. It does not replace professional medical advice, diagnosis, or treatment. Always seek the advice of a qualified healthcare provider regarding any suspected skin condition.
             </p>
          </div>
       </div>

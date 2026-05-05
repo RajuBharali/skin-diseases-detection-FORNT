@@ -100,7 +100,7 @@ export default function Home() {
           {/* 1. Header Text Container */}
           <div className="w-full lg:pr-8 xl:pr-12 order-1 lg:col-start-1 lg:row-start-1 lg:self-end pt-4 lg:pt-0">
             <h2 className="text-4xl md:text-5xl lg:text-5xl font-extrabold mb-4 lg:mb-8 tracking-tight leading-tight mt-6 lg:mt-0">Analyze your skin health.</h2>
-            <p className="text-blue-100 text-base sm:text-lg mb-0 max-w-lg">Get immediate, AI-driven insights on your skin concerns before stepping into a doctor's office.</p>
+            <p className="text-blue-100 text-base sm:text-lg mb-0 max-w-lg">Get immediate, AI-driven insights on your skin concerns before stepping into a doctor&apos;s office.</p>
           </div>
           
           {/* 2. Hero Images Container (Between Text & Cards on Mobile) */}
@@ -442,7 +442,7 @@ export default function Home() {
                <span className="material-icons text-blue-500 text-4xl sm:text-6xl mb-4 sm:mb-6 bg-white p-3 sm:p-4 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-100">favorite</span>
                <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-slate-900 mb-4 sm:mb-6 leading-tight">Empowering preventive care.</h2>
                <p className="text-slate-600 text-base sm:text-lg md:text-xl leading-relaxed mb-8 sm:mb-10 max-w-3xl mx-auto">
-                 We believe that early detection shouldn't be a privilege. By leveraging powerful artificial intelligence, we aim to provide an accessible first layer of skin-health awareness to everyone.
+                 We believe that early detection shouldn&apos;t be a privilege. By leveraging powerful artificial intelligence, we aim to provide an accessible first layer of skin-health awareness to everyone.
                </p>
                
                <Link href="/predict" className="inline-block w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold text-base sm:text-lg px-8 sm:px-12 py-4 sm:py-5 rounded-full shadow-lg shadow-blue-600/30 transition-all transform hover:-translate-y-1">
