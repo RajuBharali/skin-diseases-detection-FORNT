@@ -180,14 +180,28 @@ export default function ResultPage() {
   const { final_decision } = data
   const pct = final_decision.confidence_percent
 
+  const getValidIcon = (icon: string) => {
+    if (!icon) return "healing";
+    if (icon === "clinical_notes" || icon === "notes" || icon === "description" || icon === "assignment") return "medical_services";
+    if (icon === "water_drop" || icon === "water") return "water_drop";
+    if (icon === "block" || icon === "close" || icon === "cancel") return "block";
+    if (icon === "sanitizer" || icon === "clean hands") return "sanitizer";
+    if (icon === "wb_sunny" || icon === "sun") return "wb_sunny";
+    if (icon === "local_drink") return "local_drink";
+    if (icon === "face") return "face";
+    
+    const valid = ["medical_services", "healing", "health_and_safety", "local_hospital", "spa", "water_drop", "block", "sanitizer", "face", "local_drink", "wb_sunny", "info", "warning"];
+    return valid.includes(icon) ? icon : "healing";
+  };
+
   const defaultActions = [
-    { icon: "clinical_notes", label: "Consult a certified dermatologist", desc: "Book an appointment for professional evaluation" },
+    { icon: "medical_services", label: "Consult a certified dermatologist", desc: "Book an appointment for professional evaluation" },
     { icon: "water_drop", label: "Keep affected skin moisturized", desc: "Use fragrance-free emollient creams twice daily" },
     { icon: "block", label: "Avoid scratching or irritation", desc: "Use cold compresses to soothe flare-ups" },
     { icon: "sanitizer", label: "Use gentle, unscented products", desc: "Switch to hypoallergenic cleansers and detergents" },
-  ]
+  ];
   
-  const actionsToDisplay = aiActions || defaultActions
+  const actionsToDisplay = aiActions || defaultActions;
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-800 selection:bg-blue-500/30 overflow-hidden">
@@ -338,8 +352,8 @@ export default function ResultPage() {
                   ) : (
                      actionsToDisplay.map((a, i) => (
                         <div className="flex items-start gap-4 p-3 sm:p-4 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100 group" key={i}>
-                           <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform">
-                              <span className="material-icons text-lg sm:text-xl">{a.icon}</span>
+                           <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform overflow-hidden select-none">
+                              <span className="material-icons text-lg sm:text-xl">{getValidIcon(a.icon)}</span>
                            </div>
                            <div>
                               <h4 className="text-xs sm:text-sm font-bold text-slate-800 mb-0.5 sm:mb-1">{a.label}</h4>

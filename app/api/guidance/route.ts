@@ -30,7 +30,7 @@ export async function POST(req: Request) {
       return NextResponse.json({
         suggestion,
         actions: [
-          { icon: "clinical_notes", label: `Consult doctor for ${condition}`, desc: "Book an appointment for professional evaluation" },
+          { icon: "medical_services", label: `Consult doctor for ${condition}`, desc: "Book an appointment for professional evaluation" },
           { icon: "water_drop", label: "Keep affected skin moisturized", desc: "Use fragrance-free emollient creams twice daily" },
           { icon: "block", label: "Avoid scratching or irritation", desc: "Use cold compresses to soothe flare-ups" },
           { icon: "sanitizer", label: "Use gentle, unscented products", desc: "Switch to hypoallergenic cleansers and detergents" }
@@ -50,7 +50,7 @@ Return the result strictly as a JSON object containing two keys: "suggestion" an
 
 1. "suggestion": A short paragraph (max 30 words) explaining how seriously they should take this result given the ${confidence}% confidence score.
 2. "actions": An array of 4 recommended actions they should take. Each action object must have the keys:
-   - icon: A valid Google Material icon name (e.g. "clinical_notes", "water_drop", "block", "sanitizer", "healing", "medical_services", "spa", "local_hospital", "info", "warning", "wb_sunny", "face")
+   - icon: A valid Google Material icon name (e.g. "medical_services", "water_drop", "block", "sanitizer", "healing", "spa", "local_hospital", "wb_sunny", "face")
    - label: A short, actionable title (max 5 words)
    - desc: A short description (max 10 words)
 
@@ -58,7 +58,7 @@ Example output:
 {
   "suggestion": "Given the high confidence score, it is strongly advised to schedule a consultation with a dermatologist for a professional biopsy and treatment plan.",
   "actions": [
-    { "icon": "clinical_notes", "label": "Consult a certified dermatologist", "desc": "Book an appointment for professional evaluation" }
+    { "icon": "medical_services", "label": "Consult a certified dermatologist", "desc": "Book an appointment for professional evaluation" }
   ]
 }
 Do not include markdown code block syntax like \`\`\`json. Return only the raw JSON object.`;
@@ -96,7 +96,7 @@ Do not include markdown code block syntax like \`\`\`json. Return only the raw J
         suggestion += "The model has low confidence. This might be due to a blurry image or uncommon presentation. A professional evaluation is highly recommended.";
       }
       fallbackActions = [
-        { icon: "clinical_notes", label: `Consult doctor for ${condition}`, desc: "Book an appointment for professional evaluation" },
+        { icon: "medical_services", label: `Consult doctor for ${condition}`, desc: "Book an appointment for professional evaluation" },
         { icon: "water_drop", label: "Keep affected skin moisturized", desc: "Use fragrance-free emollient creams twice daily" },
         { icon: "block", label: "Avoid scratching or irritation", desc: "Use cold compresses to soothe flare-ups" },
         { icon: "sanitizer", label: "Use gentle, unscented products", desc: "Switch to hypoallergenic cleansers and detergents" }

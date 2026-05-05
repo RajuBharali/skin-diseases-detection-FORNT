@@ -19,6 +19,13 @@ export default function UploadBox({ onSwitchToCamera }: UploadBoxProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Patient / Client Details State
+  const [name, setName] = useState("")
+  const [email, setEmail] = useState("")
+  const [phoneNumber, setPhoneNumber] = useState("")
+  const [age, setAge] = useState<number | "">("")
+  const [gender, setGender] = useState("")
+
   // Cropping State
   const [isCropping, setIsCropping] = useState(false)
   const [crop, setCrop] = useState({ x: 0, y: 0 })
@@ -78,18 +85,22 @@ export default function UploadBox({ onSwitchToCamera }: UploadBoxProps) {
   /* Send real file directly to API */
   const analyze = async () => {
     if (!file) return
+    if (!name || !email || !phoneNumber || !age || !gender) {
+      setError("Please fill out all required fields.")
+      return
+    }
     setLoading(true)
     setError(null)
 
     try {
-      const result = await predictImage(file)
+      const result = await predictImage(file, name, email, phoneNumber, Number(age), gender)
       sessionStorage.setItem("lastPrediction", JSON.stringify(result))
       if (preview) {
         sessionStorage.setItem("lastPreview", preview)
       }
       router.push("/result")
-    } catch {
-      setError("Analysis failed. Please try again.")
+    } catch (e: any) {
+      setError(e.message || "Analysis failed. Please try again.")
     }
 
     setLoading(false)
@@ -218,19 +229,62 @@ export default function UploadBox({ onSwitchToCamera }: UploadBoxProps) {
         {/* RIGHT INFO */}
         <div className="flex flex-col gap-6 pt-4">
           <div className="bg-white rounded-2xl border border-slate-100 p-6 sm:p-8 shadow-sm">
-            <h3 className="text-xs tracking-widest font-extrabold text-[#023b7a] mb-6 uppercase">How to Get Results</h3>
-            <div className="space-y-6 text-slate-600 font-medium text-sm">
-              <div className="flex gap-4 items-center">
-                <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center font-bold text-base shrink-0 border border-blue-100 shadow-inner">1</div>
-                <p>Upload a focused skin image natively or scan via camera.</p>
+            <h3 className="text-xs tracking-widest font-extrabold text-[#023b7a] mb-6 uppercase">Client Information</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Name</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g. John Doe"
+                  className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                />
               </div>
-              <div className="flex gap-4 items-center">
-                <div className="w-10 h-10 bg-cyan-50 text-cyan-600 rounded-xl flex items-center justify-center font-bold text-base shrink-0 border border-cyan-100 shadow-inner">2</div>
-                <p>Use the cropping tool to isolate the specific bump or mole.</p>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Email</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="e.g. john@example.com"
+                  className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                />
               </div>
-              <div className="flex gap-4 items-center">
-                <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center font-bold text-base shrink-0 border border-indigo-100 shadow-inner">3</div>
-                <p>Our neural network immediately evaluates the risk profile.</p>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Phone Number</label>
+                <input
+                  type="tel"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  placeholder="e.g. +123456789"
+                  className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Age</label>
+                  <input
+                    type="number"
+                    value={age}
+                    onChange={(e) => setAge(e.target.value === "" ? "" : Number(e.target.value))}
+                    placeholder="e.g. 25"
+                    className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Gender</label>
+                  <select
+                    value={gender}
+                    onChange={(e) => setGender(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                  >
+                    <option value="">Select</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>
