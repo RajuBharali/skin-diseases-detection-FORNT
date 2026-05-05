@@ -20,6 +20,15 @@ interface AIAction {
   desc: string
 }
 
+interface AISuggestionResponse {
+  suggestion: string
+  urgencyLevel: "URGENT" | "MODERATE" | "ROUTINE" | "WELLNESS"
+  confidenceNote: string
+  warningSign: string | null
+  followUp: string
+  actions: AIAction[]
+}
+
 // ─── Animated Counter ─────────────────────────────────────────────────────────
 function AnimCounter({ target }: { target: number }) {
   const [val, setVal] = useState(0)
@@ -122,8 +131,8 @@ export default function ResultPage() {
   const [preview, setPreview] = useState<string | null>(null)
   const [aiActions, setAiActions] = useState<AIAction[] | null>(null)
   const [aiSuggestion, setAiSuggestion] = useState<string | null>(null)
+  const [aiMetadata, setAiMetadata] = useState<Partial<AISuggestionResponse>>({})
   const [displayedSuggestion, setDisplayedSuggestion] = useState<string>('')
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [loadingActions, setLoadingActions] = useState(false)
 
   useEffect(() => {
@@ -159,6 +168,12 @@ export default function ResultPage() {
               if (resData.suggestion) {
                 setAiSuggestion(resData.suggestion)
               }
+              setAiMetadata({
+                urgencyLevel: resData.urgencyLevel,
+                warningSign: resData.warningSign,
+                followUp: resData.followUp,
+                confidenceNote: resData.confidenceNote
+              })
             })
             .catch(err => console.error("Error fetching AI guidance:", err))
             .finally(() => setLoadingActions(false))
@@ -297,16 +312,34 @@ export default function ResultPage() {
 
             {/* AI Clinical Suggestion */}
             {aiSuggestion && (
-              <div className="bg-indigo-50 rounded-[2rem] p-6 sm:p-8 border border-indigo-100 flex gap-4 items-start shadow-sm transform transition-all duration-500 animate-fade-in-up">
-                <div className="w-12 h-12 rounded-xl bg-white text-indigo-600 flex items-center justify-center shrink-0 shadow-sm border border-indigo-100">
-                  <span className="material-icons text-2xl">psychology</span>
+              <div className={`rounded-[2rem] p-6 sm:p-8 border flex flex-col sm:flex-row gap-6 items-start shadow-sm transform transition-all duration-500 animate-fade-in-up ${
+                aiMetadata.urgencyLevel === "URGENT" ? "bg-red-50 border-red-100" : "bg-indigo-50 border-indigo-100"
+              }`}>
+                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-sm border ${
+                  aiMetadata.urgencyLevel === "URGENT" ? "bg-white text-red-600 border-red-100" : "bg-white text-indigo-600 border-indigo-100"
+                }`}>
+                  <span className="material-icons text-3xl">{aiMetadata.urgencyLevel === "URGENT" ? "emergency" : "psychology"}</span>
                 </div>
-                <div>
-                  <h3 className="text-xs sm:text-sm font-extrabold text-indigo-900 mb-2 uppercase tracking-widest">AI Clinical Evaluation</h3>
-                  <p className="text-indigo-800/80 text-xs sm:text-sm leading-relaxed font-medium">
+                <div className="flex-1">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                    <h3 className={`text-xs sm:text-sm font-extrabold uppercase tracking-widest ${
+                      aiMetadata.urgencyLevel === "URGENT" ? "text-red-900" : "text-indigo-900"
+                    }`}>AI Clinical Evaluation</h3>
+                    {aiMetadata.urgencyLevel && (
+                      <span className={`text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tighter ${
+                        aiMetadata.urgencyLevel === "URGENT" ? "bg-red-600 text-white shadow-lg shadow-red-200" :
+                        aiMetadata.urgencyLevel === "MODERATE" ? "bg-orange-500 text-white" :
+                        "bg-green-500 text-white"
+                      }`}>
+                        {aiMetadata.urgencyLevel} Priority
+                      </span>
+                    )}
+                  </div>
+                  
+                  <p className={`${aiMetadata.urgencyLevel === "URGENT" ? "text-red-800" : "text-indigo-800"} text-sm sm:text-base leading-relaxed font-semibold`}>
                     {displayedSuggestion}
                     {displayedSuggestion.length < aiSuggestion.length && (
-                      <span className="animate-pulse inline-block w-1.5 h-3.5 sm:h-4 ml-1 bg-indigo-500 align-middle"></span>
+                      <span className="animate-pulse inline-block w-1.5 h-3.5 sm:h-4 ml-1 bg-current align-middle"></span>
                     )}
                   </p>
                 </div>

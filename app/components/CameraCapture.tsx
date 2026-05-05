@@ -132,6 +132,7 @@ export default function CameraCapture({ onResult, onFallback }: Props) {
 
         sessionStorage.setItem("lastPrediction",JSON.stringify(result))
         sessionStorage.setItem("lastPreview",preview)
+        sessionStorage.setItem("patientName", name)
         sessionStorage.setItem("patientAge", String(age))
         sessionStorage.setItem("patientGender", gender)
 

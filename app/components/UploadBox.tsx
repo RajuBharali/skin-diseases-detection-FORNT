@@ -99,6 +99,7 @@ export default function UploadBox({ onSwitchToCamera }: UploadBoxProps) {
       if (preview) {
         sessionStorage.setItem("lastPreview", preview)
       }
+      sessionStorage.setItem("patientName", name)
       sessionStorage.setItem("patientAge", String(age))
       sessionStorage.setItem("patientGender", gender)
       router.push("/result")
