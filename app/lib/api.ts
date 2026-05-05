@@ -15,7 +15,7 @@ export async function predictImage(
   formData.append("gender", gender)
 
   // Update backend URL if needed (e.g., local server or production URL)
-  const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://simpletech.in/predict";
+  const backendUrl = process.env.NEXT_PUBLIC_API_URL || "https://simpletech.in/predict";
 
   const res = await fetch(backendUrl, {
     method: "POST",
