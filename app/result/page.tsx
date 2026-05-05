@@ -146,7 +146,7 @@ export default function ResultPage() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
               condition: parsed.final_decision.result,
-              confidence: parsed.final_decision.confidence_percent,
+              confidence: Number(parsed.final_decision.confidence_percent.toFixed(1)),
               age: age,
               gender: gender
             })
