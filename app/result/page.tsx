@@ -210,16 +210,27 @@ export default function ResultPage() {
 
   const getValidIcon = (icon: string) => {
     if (!icon) return "healing";
-    if (icon === "clinical_notes" || icon === "notes" || icon === "description" || icon === "assignment") return "medical_services";
-    if (icon === "water_drop" || icon === "water") return "water_drop";
-    if (icon === "block" || icon === "close" || icon === "cancel") return "block";
-    if (icon === "sanitizer" || icon === "clean hands") return "sanitizer";
-    if (icon === "wb_sunny" || icon === "sun") return "wb_sunny";
-    if (icon === "local_drink") return "local_drink";
-    if (icon === "face") return "face";
-    
-    const valid = ["medical_services", "healing", "health_and_safety", "local_hospital", "spa", "water_drop", "block", "sanitizer", "face", "local_drink", "wb_sunny", "info", "warning"];
-    return valid.includes(icon) ? icon : "healing";
+    const mapped: Record<string, string> = {
+      "clinical_notes": "medical_services",
+      "notes": "medical_services",
+      "description": "medical_services",
+      "assignment": "medical_services",
+      "water": "water_drop",
+      "close": "block",
+      "cancel": "block",
+      "clean hands": "sanitizer",
+      "sun": "wb_sunny",
+    };
+
+    const validIcons = [
+      "medical_services", "warning", "health_and_safety", "local_hospital", 
+      "healing", "water_drop", "block", "sanitizer", "spa", "wb_sunny", 
+      "face", "info", "vaccines", "medication", "science", "visibility", 
+      "psychology", "shield", "verified", "local_drink"
+    ];
+
+    if (mapped[icon]) return mapped[icon];
+    return validIcons.includes(icon) ? icon : "healing";
   };
 
   const actionsToDisplay = aiActions || [];
@@ -381,7 +392,10 @@ export default function ResultPage() {
             {/* Recommendations */}
             <div className="bg-white rounded-[2rem] shadow-lg p-6 sm:p-8 border border-slate-100 relative overflow-hidden">
                <div className="absolute top-0 right-0 w-32 h-32 bg-teal-50 rounded-bl-[100px] -z-0"></div>
-               <h3 className="relative z-10 text-base sm:text-lg font-extrabold text-slate-800 mb-6 border-b border-slate-100 pb-4">Recommended Actions</h3>
+               <h3 className="relative z-10 text-base sm:text-lg font-extrabold text-slate-800 mb-6 border-b border-slate-100 pb-4 flex items-center gap-2">
+                 AI Recommended Actions
+                 <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded uppercase tracking-tighter font-black">AI</span>
+               </h3>
                
                <div className="relative z-10 space-y-2">
                   {loadingActions ? (
