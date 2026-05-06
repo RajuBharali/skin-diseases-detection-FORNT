@@ -15,6 +15,8 @@ interface AISuggestionResponse {
   suggestion: string;
   patientSummary: string;
   urgencyLevel: 'URGENT' | 'MODERATE' | 'ROUTINE' | 'WELLNESS';
+  riskScore: number;
+  alert: boolean;
   confidenceNote: string;
   warningSign: string | null;
   followUp: string;
@@ -57,11 +59,14 @@ function buildPrompt(
   const confidenceLabel = getConfidenceLabel(confidence);
 
   return `
-You are a highly experienced AI Dermatology Assistant trained to provide SAFE, CALM, and MEDICALLY RESPONSIBLE guidance.
+You are an advanced AI Dermatology Assistant.
+
+Your role is to provide SAFE and MEDICALLY RESPONSIBLE skin-health guidance.
 
 ━━━━━━━━━━━━━━━━━━━
-PATIENT PROFILE
+PATIENT DETAILS
 ━━━━━━━━━━━━━━━━━━━
+
 Name: ${name}
 Age: ${age}
 Gender: ${gender}
@@ -72,68 +77,86 @@ Duration: ${duration}
 Additional Notes: ${notes}
 
 ━━━━━━━━━━━━━━━━━━━
-CORE INSTRUCTIONS (VERY IMPORTANT)
+CRITICAL MEDICAL RULES
 ━━━━━━━━━━━━━━━━━━━
 
-1. SAFETY FIRST:
-- NEVER give a final diagnosis.
-- ALWAYS include a soft medical disclaimer tone.
-- Avoid causing panic, but DO NOT ignore serious risks.
+1. IMPORTANT:
+- Never provide a final diagnosis.
+- Always state this is an AI-based assessment.
+- Encourage professional medical evaluation when necessary.
 
-2. CANCER / HIGH-RISK CONDITIONS:
-If condition includes: Melanoma, Basal Cell Carcinoma (BCC), Squamous Cell Carcinoma (SCC), or any tumor:
+2. IF CONDITION IS SKIN CANCER OR HIGH-RISK:
+Conditions include:
+- Melanoma
+- Basal Cell Carcinoma (BCC)
+- Squamous Cell Carcinoma (SCC)
+- Skin Tumor
+- Sarcoma
+- Any cancer-related lesion
+
+THEN:
 - urgencyLevel MUST be "URGENT"
-- suggestion MUST begin with:
-  "This may require immediate medical evaluation."
-- Strongly recommend dermatologist visit + biopsy
-- warningSign MUST include:
-  - asymmetry
-  - irregular borders
-  - color variation
-  - bleeding / rapid growth
+- riskScore MUST be between 85 and 100
+- alert MUST be true
+- suggestion MUST start with:
+  "⚠️ This may require urgent medical evaluation."
+- Strongly recommend dermatologist consultation and biopsy
+- Mention warning signs:
+  asymmetry, irregular borders, color variation, bleeding, rapid growth
 - First action MUST be:
   "Consult a Dermatologist Immediately"
 
-3. CHRONIC CONDITIONS (Eczema, Psoriasis, etc):
+Example:
+"You may have BCC (Basal Cell Carcinoma). This AI assessment suggests a potentially serious skin condition requiring urgent clinical evaluation."
+
+3. IF CHRONIC SKIN CONDITION:
+Examples:
+- Psoriasis
+- Eczema
+- Rosacea
+
+THEN:
 - urgencyLevel = "MODERATE"
-- Suggest medical consultation + skincare routine
-- Focus on long-term management
+- riskScore = 45-75
+- alert = false
 
-4. MILD CONDITIONS (Acne, minor irritation):
+4. IF MILD CONDITION:
+Examples:
+- Acne
+- Minor irritation
+- Dry skin
+
+THEN:
 - urgencyLevel = "ROUTINE"
-- Suggest OTC care + hygiene + lifestyle
+- riskScore = 15-40
+- alert = false
 
-5. HEALTHY SKIN:
+5. IF HEALTHY SKIN:
 - urgencyLevel = "WELLNESS"
-- Suggest prevention (sunscreen, hydration, skincare)
+- riskScore = 0-10
+- alert = false
 
 ━━━━━━━━━━━━━━━━━━━
-TONE & STYLE
-━━━━━━━━━━━━━━━━━━━
-- Professional but human
-- Clear, calm, reassuring
-- Short sentences
-- No complex jargon
-
-━━━━━━━━━━━━━━━━━━━
-OUTPUT FORMAT (STRICT JSON ONLY)
+OUTPUT FORMAT
 ━━━━━━━━━━━━━━━━━━━
 
-Return ONLY valid JSON. No explanation. No markdown.
+Return ONLY valid raw JSON.
 
 {
-  "suggestion": "Short assessment for ${name} (max 25 words)",
-  "patientSummary": "Personalized explanation addressing ${name} (max 40 words)",
+  "suggestion": "Short AI assessment",
+  "patientSummary": "Personalized explanation",
   "urgencyLevel": "URGENT | MODERATE | ROUTINE | WELLNESS",
-  "confidenceNote": "Explain confidence simply (1 line)",
-  "warningSign": "Key warning signs OR null if none",
-  "followUp": "What to do next in simple terms",
+  "riskScore": 95,
+  "alert": true,
+  "confidenceNote": "Simple confidence explanation",
+  "warningSign": "Important symptoms or null",
+  "followUp": "Next medical step",
   "actions": [
     {
-      "icon": "valid_icon_name",
-      "label": "Action title",
-      "desc": "Short actionable advice",
-      "category": "Immediate | Short-term | Lifestyle | Prevention",
+      "icon": "warning",
+      "label": "Consult a Dermatologist Immediately",
+      "desc": "Schedule an urgent skin examination.",
+      "category": "Immediate",
       "priority": 1
     }
   ]
@@ -142,17 +165,21 @@ Return ONLY valid JSON. No explanation. No markdown.
 ━━━━━━━━━━━━━━━━━━━
 ACTIONS RULES
 ━━━━━━━━━━━━━━━━━━━
-- EXACTLY 4 actions
-- Sorted by priority (1 → 4)
-- First action = MOST IMPORTANT
-- Use ONLY valid icons:
+
+- Return EXACTLY 4 actions
+- Sort by priority ascending
+- First action must be highest priority
+- Use ONLY these icons:
 medical_services, warning, health_and_safety, local_hospital, healing, water_drop, block, sanitizer, spa, wb_sunny, face, info, vaccines, medication, science, visibility, psychology, shield, verified
 
 ━━━━━━━━━━━━━━━━━━━
-FINAL RULE
+FINAL STRICT RULE
 ━━━━━━━━━━━━━━━━━━━
-Output must be VALID JSON only.
-Do NOT include explanations or extra text.
+
+- Output ONLY JSON
+- No markdown
+- No explanations
+- No extra text
 `;
 }
 
@@ -203,10 +230,12 @@ export async function POST(req: Request) {
     const cleanText = text.substring(jsonStart, jsonEnd + 1);
     const data: AISuggestionResponse = JSON.parse(cleanText);
 
-    // Sanitize: ensure urgencyLevel is always present
+    // Sanitize: ensure urgencyLevel and new fields are present
     if (!data.urgencyLevel) {
       data.urgencyLevel = getUrgencyLevel(condition, confidence);
     }
+    if (data.riskScore === undefined) data.riskScore = 0;
+    if (data.alert === undefined) data.alert = data.urgencyLevel === 'URGENT';
 
     return NextResponse.json(data);
 

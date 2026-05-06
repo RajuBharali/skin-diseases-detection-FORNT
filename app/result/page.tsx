@@ -222,14 +222,7 @@ export default function ResultPage() {
     return valid.includes(icon) ? icon : "healing";
   };
 
-  const defaultActions: AIAction[] = [
-    { icon: "medical_services", label: "Consult a certified dermatologist", desc: "Book an appointment for professional evaluation" },
-    { icon: "water_drop", label: "Keep affected skin moisturized", desc: "Use fragrance-free emollient creams twice daily" },
-    { icon: "block", label: "Avoid scratching or irritation", desc: "Use cold compresses to soothe flare-ups" },
-    { icon: "sanitizer", label: "Use gentle, unscented products", desc: "Switch to hypoallergenic cleansers and detergents" },
-  ];
-  
-  const actionsToDisplay = aiActions || defaultActions;
+  const actionsToDisplay = aiActions || [];
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-800 selection:bg-blue-500/30 overflow-hidden">
