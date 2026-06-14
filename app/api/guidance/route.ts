@@ -42,6 +42,41 @@ function getUrgencyLevel(condition: string, confidence: number): 'URGENT' | 'MOD
   return 'ROUTINE';
 }
 
+function extractFirstJsonObject(text: string): string | null {
+  const start = text.indexOf('{');
+  if (start === -1) return null;
+
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let i = start; i < text.length; i++) {
+    const char = text[i];
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+    if (char === '\\') {
+      escaped = true;
+      continue;
+    }
+    if (char === '"') {
+      inString = !inString;
+      continue;
+    }
+    if (inString) continue;
+    if (char === '{') depth += 1;
+    if (char === '}') {
+      depth -= 1;
+      if (depth === 0) {
+        return text.substring(start, i + 1);
+      }
+    }
+  }
+
+  return null;
+}
+
 // ─── Build Gemini Prompt ──────────────────────────────────────────────────────
 
 // ─── Build Gemini Prompt ──────────────────────────────────────────────────────
@@ -219,15 +254,11 @@ export async function POST(req: Request) {
     const result = await model.generateContent(prompt);
     const text = result.response.text();
 
-    // More robust JSON extraction (find first { and last })
-    const jsonStart = text.indexOf('{');
-    const jsonEnd = text.lastIndexOf('}');
-
-    if (jsonStart === -1 || jsonEnd === -1) {
-      throw new Error("No JSON found in AI response");
+    const cleanText = extractFirstJsonObject(text);
+    if (!cleanText) {
+      throw new Error("No JSON object found in AI response");
     }
 
-    const cleanText = text.substring(jsonStart, jsonEnd + 1);
     const data: AISuggestionResponse = JSON.parse(cleanText);
 
     // Sanitize: ensure urgencyLevel and new fields are present
@@ -236,6 +267,7 @@ export async function POST(req: Request) {
     }
     if (data.riskScore === undefined) data.riskScore = 0;
     if (data.alert === undefined) data.alert = data.urgencyLevel === 'URGENT';
+    if (!Array.isArray(data.actions)) data.actions = [];
 
     return NextResponse.json(data);
 
