@@ -162,8 +162,10 @@ export default function ResultPage() {
           })
             .then(res => res.json())
             .then(resData => {
-              if (resData.actions) {
+              if (Array.isArray(resData.actions)) {
                 setAiActions(resData.actions)
+              } else {
+                setAiActions([])
               }
               if (resData.suggestion) {
                 setAiSuggestion(resData.suggestion)
