@@ -346,6 +346,11 @@ export default function ResultPage() {
                       <span className="animate-pulse inline-block w-1.5 h-3.5 sm:h-4 ml-1 bg-current align-middle"></span>
                     )}
                   </p>
+                  {aiMetadata.followUp && (
+                    <p className="mt-4 text-sm text-slate-600 leading-relaxed border-t border-slate-200 pt-4">
+                      <span className="font-semibold text-slate-800">Recommendation:</span> {aiMetadata.followUp}
+                    </p>
+                  )}
                 </div>
               </div>
             )}
@@ -402,19 +407,23 @@ export default function ResultPage() {
                      <div className="flex justify-center items-center py-8">
                        <div className="w-8 h-8 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
                      </div>
-                  ) : (
-                     actionsToDisplay.map((a, i) => (
-                        <div className="flex items-start gap-4 p-3 sm:p-4 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100 group" key={i}>
-                           <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform overflow-hidden select-none">
-                              <span className="material-icons text-lg sm:text-xl">{getValidIcon(a.icon)}</span>
-                           </div>
-                           <div>
-                              <h4 className="text-xs sm:text-sm font-bold text-slate-800 mb-0.5 sm:mb-1">{a.label}</h4>
-                              <p className="text-[10px] sm:text-xs text-slate-500 font-medium leading-relaxed">{a.desc}</p>
-                           </div>
-                        </div>
-                     ))
-                  )}
+                ) : actionsToDisplay.length > 0 ? (
+                  actionsToDisplay.map((a, i) => (
+                    <div className="flex items-start gap-4 p-3 sm:p-4 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100 group" key={i}>
+                      <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform overflow-hidden select-none">
+                        <span className="material-icons text-lg sm:text-xl">{getValidIcon(a.icon)}</span>
+                      </div>
+                      <div>
+                        <h4 className="text-xs sm:text-sm font-bold text-slate-800 mb-0.5 sm:mb-1">{a.label}</h4>
+                        <p className="text-[10px] sm:text-xs text-slate-500 font-medium leading-relaxed">{a.desc}</p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                    No AI recommended actions were returned. Please review the recommendation above for follow-up guidance.
+                  </div>
+                )}
                </div>
             </div>
 
