@@ -18,6 +18,8 @@ interface AIAction {
   icon: string
   label: string
   desc: string
+  category?: string
+  priority?: number
 }
 
 interface AISuggestionResponse {
@@ -134,6 +136,7 @@ export default function ResultPage() {
   const [aiMetadata, setAiMetadata] = useState<Partial<AISuggestionResponse>>({})
   const [displayedSuggestion, setDisplayedSuggestion] = useState<string>('')
   const [loadingActions, setLoadingActions] = useState(false)
+  const [expandedAction, setExpandedAction] = useState<number | null>(null)
 
   useEffect(() => {
     try {
@@ -402,18 +405,41 @@ export default function ResultPage() {
                      <div className="flex justify-center items-center py-8">
                        <div className="w-8 h-8 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin"></div>
                      </div>
-                  ) : (
-                     actionsToDisplay.map((a, i) => (
-                        <div className="flex items-start gap-4 p-3 sm:p-4 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100 group" key={i}>
-                           <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform overflow-hidden select-none">
-                              <span className="material-icons text-lg sm:text-xl">{getValidIcon(a.icon)}</span>
+                  ) : actionsToDisplay.length > 0 ? (
+                     actionsToDisplay.map((a, i) => {
+                        const isExpanded = expandedAction === i
+                        return (
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => setExpandedAction(isExpanded ? null : i)}
+                          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setExpandedAction(isExpanded ? null : i) }}
+                          className="flex flex-col gap-3 p-3 sm:p-4 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100 group cursor-pointer"
+                          key={i}
+                        >
+                           <div className="flex items-start gap-4">
+                             <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform overflow-hidden select-none">
+                                <span className="material-icons text-lg sm:text-xl">{getValidIcon(a.icon)}</span>
+                             </div>
+                             <div>
+                                <h4 className="text-xs sm:text-sm font-bold text-slate-800 mb-0.5 sm:mb-1">{a.label}</h4>
+                                <p className="text-[10px] sm:text-xs text-slate-500 font-medium leading-relaxed">{a.desc}</p>
+                             </div>
                            </div>
-                           <div>
-                              <h4 className="text-xs sm:text-sm font-bold text-slate-800 mb-0.5 sm:mb-1">{a.label}</h4>
-                              <p className="text-[10px] sm:text-xs text-slate-500 font-medium leading-relaxed">{a.desc}</p>
-                           </div>
+                           {isExpanded && (
+                             <div className="mt-2 pl-14">
+                               {a.category && <div className="text-[11px] text-slate-600"><strong>Category:</strong> {a.category}</div>}
+                               {a.priority !== undefined && <div className="text-[11px] text-slate-600"><strong>Priority:</strong> {a.priority}</div>}
+                               <pre className="mt-2 p-2 bg-slate-100 rounded text-xs text-slate-700 overflow-auto">{JSON.stringify(a, null, 2)}</pre>
+                             </div>
+                           )}
                         </div>
-                     ))
+                        )
+                     })
+                  ) : (
+                     <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                        No AI recommended actions were returned. Please review the recommendation above for follow-up guidance.
+                     </div>
                   )}
                </div>
             </div>
